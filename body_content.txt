@@ -1,0 +1,1886 @@
+    <span></span><span></span><span></span>
+  </button>
+  <div class="logo">🔬 μFluidic <span>Lab</span></div>
+  <button class="nt on"  data-tab="c" onclick="goTo('c')">🧪 Colorimetry</button>
+  <button class="nt"     data-tab="b" onclick="goTo('b')">🩸 Blood Analysis</button>
+  <button class="nt"     data-tab="s" onclick="goTo('s')">📈 Simulation</button>
+</nav>
+
+<!-- SIDE DRAWER OVERLAY -->
+<div id="drawer-overlay" onclick="closeDrawer()"></div>
+
+<!-- SIDE DRAWER -->
+<aside id="side-drawer">
+  <div class="drawer-header">
+    <div class="drawer-logo">🔬 μFluidic Lab</div>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+
+  <div class="drawer-section-label">Main Sections</div>
+
+  <button class="dnav on" data-tab="c" onclick="goTo('c');closeDrawer()">
+    <span class="dni">🧪</span>
+    <div class="dnav-text">
+      <div class="dnav-title">Colorimetry</div>
+      <div class="dnav-sub">Measure colour from strip images</div>
+    </div>
+  </button>
+
+  <button class="dnav" data-tab="b" onclick="goTo('b');closeDrawer()">
+    <span class="dni">🩸</span>
+    <div class="dnav-text">
+      <div class="dnav-title">Blood Analysis</div>
+      <div class="dnav-sub">Analyse blood separation layers</div>
+    </div>
+  </button>
+
+  <button class="dnav" data-tab="s" onclick="goTo('s');closeDrawer()">
+    <span class="dni">📈</span>
+    <div class="dnav-text">
+      <div class="dnav-title">Simulation</div>
+      <div class="dnav-sub">Predict haemoglobin recovery</div>
+    </div>
+  </button>
+
+  <div class="drawer-section-label" style="margin-top:8px">Blood Analysis Modes</div>
+
+  <button class="dmode on" data-bmode="sep"
+    onclick="goTo('b');setBModeFromDrawer('sep');closeDrawer()">
+    <span class="dmi">🩸</span>
+    <div class="dnav-text">
+      <div class="dnav-title">Layer Separation</div>
+      <div class="dnav-sub">Plasma · Buffy coat · RBC layers</div>
+    </div>
+  </button>
+
+  <button class="dmode" data-bmode="dil"
+    onclick="goTo('b');setBModeFromDrawer('dil');closeDrawer()">
+    <span class="dmi">🧬</span>
+    <div class="dnav-text">
+      <div class="dnav-title">Serial Dilution</div>
+      <div class="dnav-sub">Hb calibration curve from dilutions</div>
+    </div>
+  </button>
+
+  <button class="dmode" data-bmode="time"
+    onclick="goTo('b');setBModeFromDrawer('time');closeDrawer()">
+    <span class="dmi">📅</span>
+    <div class="dnav-text">
+      <div class="dnav-title">Time Point Comparison</div>
+      <div class="dnav-sub">Track recovery Week 0 → 12</div>
+    </div>
+  </button>
+
+  <button class="dmode" data-bmode="ref"
+    onclick="goTo('b');setBModeFromDrawer('ref');closeDrawer()">
+    <span class="dmi">🏥</span>
+    <div class="dnav-text">
+      <div class="dnav-title">vs Reference</div>
+      <div class="dnav-sub">Compare to healthy control strip</div>
+    </div>
+  </button>
+
+  <div class="drawer-section-label" style="margin-top:8px">Colorimetry Modes</div>
+
+  <button class="dcmode" data-cmode="single"
+    onclick="goTo('c');setCModeFromDrawer('single');closeDrawer()">
+    <span class="dmi">🧪</span>
+    <div class="dnav-text">
+      <div class="dnav-title">Single Sample</div>
+      <div class="dnav-sub">Measure one strip image</div>
+    </div>
+  </button>
+
+  <button class="dcmode" data-cmode="blank"
+    onclick="goTo('c');setCModeFromDrawer('blank');closeDrawer()">
+    <span class="dmi">⚖️</span>
+    <div class="dnav-text">
+      <div class="dnav-title">Sample vs Blank</div>
+      <div class="dnav-sub">Compare against zero reference</div>
+    </div>
+  </button>
+
+  <button class="dcmode" data-cmode="calib"
+    onclick="goTo('c');setCModeFromDrawer('calib');closeDrawer()">
+    <span class="dmi">📈</span>
+    <div class="dnav-text">
+      <div class="dnav-title">Full Calibration</div>
+      <div class="dnav-sub">Build standard curve from series</div>
+    </div>
+  </button>
+
+  <button class="dcmode" data-cmode="compare"
+    onclick="goTo('c');setCModeFromDrawer('compare');closeDrawer()">
+    <span class="dmi">🔀</span>
+    <div class="dnav-text">
+      <div class="dnav-title">Compare Samples</div>
+      <div class="dnav-sub">Side-by-side multiple samples</div>
+    </div>
+  </button>
+
+  <div class="drawer-footer">
+    <div>μFluidic Lab Analyser</div>
+    <div style="color:var(--muted);font-size:10px;margin-top:2px">Offline — no internet required</div>
+  </div>
+</aside>
+
+<!-- ═══════════════════════ COLORIMETRY ═══════════════════════ -->
+<div id="pg-c" class="pg on">
+<div class="row">
+
+  <!-- LEFT: image + canvas -->
+  <div class="col2">
+
+    <div class="card">
+      <div class="ct"><span class="dot"></span>Analysis Mode</div>
+      <div class="modes">
+        <div class="mb on"  onclick="cMode('single',this)">🧪 Single Sample</div>
+        <div class="mb"     onclick="cMode('blank',this)">⚖️ vs Blank</div>
+        <div class="mb"     onclick="cMode('standard',this)">📏 vs Standard</div>
+        <div class="mb"     onclick="cMode('calib',this)">📈 Full Calibration</div>
+        <div class="mb"     onclick="cMode('compare',this)">🔀 Compare Samples</div>
+      </div>
+
+      <!-- upload zones built dynamically -->
+      <div id="c-zones" class="upload-grid"></div>
+
+      <div class="frow">
+        <div class="fg">
+          <label>Sample / Experiment Name</label>
+          <input type="text" id="c-name" value="Sample 1" placeholder="e.g. Spinach extract">
+        </div>
+        <div class="fg">
+          <label>Analyte</label>
+          <select id="c-analyte">
+            <option value="iron">Iron (Fe³⁺ + KSCN)</option>
+            <option value="glucose">Glucose</option>
+            <option value="protein">Protein (Bradford)</option>
+            <option value="custom">Custom / Unknown</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- CANVAS CARD -->
+    <div class="card">
+      <div class="ct"><span class="dot"></span>Draw Regions on Image</div>
+      <div class="tbar">
+        <button class="btn primary" onclick="analyseAll()">▶ Analyse All Regions</button>
+        <button class="btn danger"  onclick="clearAll()">🗑 Clear Regions</button>
+        <span style="font-size:11px;color:var(--muted);margin-left:4px">
+          Click &amp; drag on image to draw a region box
+        </span>
+      </div>
+
+      <!-- THE CANVAS BOX -->
+      <div class="cbox" id="c-cbox">
+        <div class="cph" id="c-ph">
+          <div class="cpi">🖼</div>
+          <p>Upload an image above<br>then drag to draw region boxes</p>
+        </div>
+        <canvas id="c-cv"></canvas>
+      </div>
+      <p style="font-size:11px;color:var(--muted)">
+        💡 Each box you draw becomes a separate measurement region.
+        You can draw multiple boxes on the same image.
+      </p>
+    </div>
+
+  </div><!-- /col2 -->
+
+  <!-- RIGHT: results + calibration + export -->
+  <div class="col">
+
+    <!-- REGION RESULTS -->
+    <div class="card">
+      <div class="ct"><span class="dot"></span>Region Measurements</div>
+      <div id="c-results">
+        <p style="font-size:12px;color:var(--muted);text-align:center;padding:20px">
+          Draw region boxes on the image to see measurements here.
+        </p>
+      </div>
+    </div>
+
+    <!-- CHARTS -->
+    <div class="card">
+      <div class="ct"><span class="dot"></span>Visual Analysis</div>
+      <div class="cgrid">
+        <div class="cg"><h4>RGB Histogram</h4><canvas id="c-hist"></canvas></div>
+        <div class="cg"><h4>HSV Values</h4><canvas id="c-hsv"></canvas></div>
+        <div class="cg"><h4>Standard Curve</h4><canvas id="c-curve"></canvas></div>
+        <div class="cg"><h4>Sample Comparison</h4><canvas id="c-comp"></canvas></div>
+      </div>
+    </div>
+
+    <!-- CALIBRATION -->
+    <div class="card">
+      <div class="ct"><span class="dot"></span>Calibration Curve (Beer-Lambert)</div>
+      <p style="font-size:11px;color:var(--muted);margin-bottom:10px">
+        Enter known concentrations (mg/L) and their measured absorbance / OD values.
+      </p>
+      <div style="display:flex;gap:20px;font-size:10px;font-weight:700;
+        text-transform:uppercase;color:var(--muted);padding:0 0 4px 28px">
+        <span style="flex:1">Concentration (mg/L)</span>
+        <span style="flex:1">Absorbance / OD</span>
+      </div>
+      <div id="cal-rows"></div>
+      <div class="tbar" style="margin-top:8px">
+        <button class="btn primary" onclick="buildCurve()">📈 Build Calibration Curve</button>
+        <button class="btn"         onclick="addCalRow()">+ Add Row</button>
+      </div>
+      <div id="cal-eq"></div>
+    </div>
+
+    <!-- EXPORT -->
+    <div class="card">
+      <div class="ct"><span class="dot"></span>Export</div>
+      <div class="egrid">
+        <div class="ec" onclick="doExport('csv','c')"><div class="ei">📊</div><div class="ef">CSV</div><div class="ed">All measurements</div></div>
+        <div class="ec" onclick="doExport('json','c')"><div class="ei">{ }</div><div class="ef">JSON</div><div class="ed">Simulation feed</div></div>
+        <div class="ec" onclick="doExport('pdf','c')"><div class="ei">📄</div><div class="ef">PDF</div><div class="ed">Lab report</div></div>
+        <div class="ec" onclick="doExport('png','c')"><div class="ei">🖼</div><div class="ef">PNG</div><div class="ed">Charts</div></div>
+      </div>
+    </div>
+
+  </div><!-- /col -->
+</div>
+</div><!-- /pg-c -->
+
+<!-- ═══════════════════════ BLOOD ══════════════════════════════ -->
+<div id="pg-b" class="pg">
+<div class="row">
+
+  <!-- LEFT -->
+  <div class="col2">
+    <div class="card">
+      <div class="ct"><span class="dot"></span>Blood Analysis Mode</div>
+      <div class="modes">
+        <div class="mb on" onclick="bMode('sep',this)">🩸 Layer Separation</div>
+        <div class="mb"    onclick="bMode('dil',this)">🧬 Serial Dilution</div>
+        <div class="mb"    onclick="bMode('time',this)">📅 Time Points</div>
+        <div class="mb"    onclick="bMode('ref',this)">🏥 vs Reference</div>
+      </div>
+      <div id="b-zones" class="upload-grid"></div>
+      <div class="frow">
+        <div class="fg"><label>Patient ID</label><input type="text" id="b-pid" placeholder="e.g. PT_001"></div>
+        <div class="fg"><label>Sex</label>
+          <select id="b-sex"><option value="female">Female</option><option value="male">Male</option></select>
+        </div>
+        <div class="fg"><label>Age</label><input type="number" id="b-age" value="25" min="1" max="100"></div>
+      </div>
+    </div>
+
+    <!-- BLOOD CANVAS -->
+    <div class="card">
+      <div class="ct"><span class="dot"></span>Select Each Blood Layer</div>
+
+      <div class="lsel">
+        <div class="lb on" data-l="plasma"  onclick="bLayer('plasma',this)">🟡 Plasma</div>
+        <div class="lb"    data-l="buffy"   onclick="bLayer('buffy',this)">⬜ Buffy Coat</div>
+        <div class="lb"    data-l="rbc"     onclick="bLayer('rbc',this)">🔴 RBC Layer</div>
+      </div>
+      <p style="font-size:11px;color:var(--muted);margin-bottom:8px">
+        Select a layer button above, then drag a box over that layer in the image.
+      </p>
+
+      <div class="cbox" id="b-cbox">
+        <div class="cph" id="b-ph">
+          <div class="cpi">🩸</div>
+          <p>Upload blood strip image<br>then drag to select each layer</p>
+        </div>
+        <canvas id="b-cv"></canvas>
+      </div>
+
+      <div class="tbar">
+        <button class="btn primary" onclick="analyseBlood()">▶ Analyse Layers</button>
+        <button class="btn blue"    onclick="autoDetect()">🤖 Auto-Detect Layers</button>
+        <button class="btn danger"  onclick="clearBlood()">🗑 Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="col">
+
+    <!-- CLINICAL RESULTS -->
+    <div class="card">
+      <div class="ct"><span class="dot"></span>Clinical Results</div>
+      <div id="b-results">
+        <p style="font-size:12px;color:var(--muted);text-align:center;padding:20px">
+          No analysis yet. Upload image and select layer regions.
+        </p>
+      </div>
+    </div>
+
+    <!-- STRIP VISUAL + GAUGE -->
+    <div class="card">
+      <div class="ct"><span class="dot"></span>Strip Visualisation</div>
+      <div class="strips">
+        <div class="strip-wrap">
+          <p>Your Sample</p>
+          <div class="sbar" id="s-bar" style="height:180px">
+            <div class="sl" id="sl-p" style="background:#555;height:50%;color:#333;font-size:7px">Plasma</div>
+            <div class="sl" id="sl-b" style="background:#888;height:4%;color:#333;font-size:7px"></div>
+            <div class="sl" id="sl-r" style="background:#333;height:46%;color:#fff;font-size:7px">RBC</div>
+          </div>
+        </div>
+        <div class="strip-wrap">
+          <p>Healthy Ref</p>
+          <div class="sbar" style="height:180px">
+            <div class="sl" style="background:#f0d060;height:55%;color:#333;font-size:7px">Plasma</div>
+            <div class="sl" style="background:#e8e0c8;height:3%;color:#333"></div>
+            <div class="sl" style="background:#c0282a;height:42%;color:#fff;font-size:7px">RBC</div>
+          </div>
+        </div>
+        <div class="strip-data">
+          <div class="srow"><span class="sk">Hematocrit</span><span class="sv" id="r-hct" style="color:var(--accent)">—</span></div>
+          <div class="srow"><span class="sk">Est. Haemoglobin</span><span class="sv" id="r-hb">— g/dL</span></div>
+          <div class="srow"><span class="sk">Plasma Layer</span><span class="sv" id="r-pp">—</span></div>
+          <div class="srow"><span class="sk">Buffy Coat</span><span class="sv" id="r-bp">—</span></div>
+          <div class="srow"><span class="sk">Classification</span><span class="sv" id="r-cls">—</span></div>
+        </div>
+      </div>
+      <!-- Gauge -->
+      <div class="gauge">
+        <div style="font-size:9px;color:var(--muted);display:flex;justify-content:space-between;margin-bottom:2px">
+          <span>Severe &lt;7</span><span>Moderate</span><span>Mild</span><span>Normal ≥12</span>
+        </div>
+        <div class="gbar"><div class="gptr" id="g-ptr" style="left:80%"></div></div>
+        <div class="gnum" id="g-num" style="color:var(--muted)">—</div>
+        <div class="glbl">Estimated Haemoglobin (g/dL)</div>
+      </div>
+    </div>
+
+    <!-- BLOOD CHARTS -->
+    <div class="card">
+      <div class="ct"><span class="dot"></span>Layer Charts</div>
+      <div class="cgrid">
+        <div class="cg"><h4>Layer %</h4><canvas id="b-layers"></canvas></div>
+        <div class="cg"><h4>RBC Histogram</h4><canvas id="b-hist"></canvas></div>
+        <div class="cg"><h4>Color Swatches</h4><canvas id="b-sw"></canvas></div>
+        <div class="cg"><h4>LAB Values</h4><canvas id="b-lab"></canvas></div>
+      </div>
+    </div>
+
+    <!-- BLOOD EXPORT -->
+    <div class="card">
+      <div class="ct"><span class="dot"></span>Export</div>
+      <div class="egrid">
+        <div class="ec" onclick="doExport('csv','b')"><div class="ei">📊</div><div class="ef">CSV</div><div class="ed">All layer data</div></div>
+        <div class="ec" onclick="doExport('json','b')"><div class="ei">{ }</div><div class="ef">JSON</div><div class="ed">Feed simulation</div></div>
+        <div class="ec" onclick="doExport('pdf','b')"><div class="ei">📄</div><div class="ef">PDF</div><div class="ed">Clinical report</div></div>
+        <div class="ec" onclick="doExport('png','b')"><div class="ei">🖼</div><div class="ef">PNG</div><div class="ed">Strip figure</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div><!-- /pg-b -->
+
+<!-- ═══════════════════════ SIMULATION ════════════════════════ -->
+<div id="pg-s" class="pg">
+<div class="row">
+
+  <!-- LEFT: inputs -->
+  <div class="col">
+    <div class="card">
+      <div class="ct"><span class="dot"></span>Patient Parameters</div>
+      <div class="info-box">
+        <p>Physiology sourced from <strong>WHO</strong>, <strong>NIH DRI</strong>, and <strong>PubMed</strong> clinical studies.
+        Non-heme iron absorption: <strong>5–20%</strong> (higher when severely anaemic).
+        Iron needed per 1 g/dL Hb rise: <strong>~3.4 mg</strong>.
+        RBC lifespan: <strong>120 days</strong>.
+        Recovery benchmark: <strong>~2 g/dL per 3 weeks</strong> with adequate iron intake.</p>
+      </div>
+      <div class="sgrid">
+        <div class="fg"><label>Patient Group</label>
+          <select id="s-age">
+            <option value="child">Child (6 mo – 11 yr)</option>
+            <option value="teen-m">Teen Boy (12–17)</option>
+            <option value="teen-f">Teen Girl (12–17)</option>
+            <option value="adult-m">Adult Male (18–50)</option>
+            <option value="adult-f" selected>Adult Female (18–50)</option>
+            <option value="pregnant">Pregnant Woman</option>
+            <option value="post-m">Post-menopausal Woman</option>
+            <option value="elder">Elderly (65+)</option>
+          </select>
+        </div>
+        <div class="fg"><label>Body Weight (kg)</label>
+          <input type="number" id="s-wt" value="60" min="5" max="200">
+        </div>
+        <div class="fg"><label>Starting Haemoglobin (g/dL)</label>
+          <input type="number" id="s-hb" value="7.0" min="1" max="18" step="0.1">
+        </div>
+        <div class="fg"><label>Iron in Food (mg per 100g)</label>
+          <input type="number" id="s-fe" value="2.7" min="0.1" max="50" step="0.1">
+          <small style="font-size:10px;color:var(--muted)">From colorimetry or enter manually</small>
+        </div>
+        <div class="fg"><label>Daily Serving (g)</label>
+          <input type="number" id="s-sv" value="100" min="10" max="500">
+        </div>
+        <div class="fg"><label>Duration (weeks)</label>
+          <input type="number" id="s-wk" value="12" min="1" max="52">
+        </div>
+        <div class="fg"><label>Vitamin C with meal?</label>
+          <select id="s-vc">
+            <option value="1">No</option>
+            <option value="1.3">Yes — small amount (+30%)</option>
+            <option value="1.6">Yes — large amount (+60%)</option>
+          </select>
+        </div>
+        <div class="fg"><label>Inhibitors present?</label>
+          <select id="s-inh">
+            <option value="1">None</option>
+            <option value="0.6">Tea or Coffee (−40%)</option>
+            <option value="0.5">Phytates / Cereals (−50%)</option>
+            <option value="0.4">Both (−60%)</option>
+          </select>
+        </div>
+      </div>
+      <div class="tbar">
+        <button class="btn primary"  onclick="runSim()">▶ Run Simulation</button>
+        <button class="btn blue"     onclick="loadFromBlood()">📥 Load Hb from Blood Tab</button>
+        <button class="btn blue"     onclick="loadFromColor()">📥 Load Iron from Colorimetry</button>
+      </div>
+    </div>
+
+    <!-- REF TABLE -->
+    <div class="card">
+      <div class="ct"><span class="dot"></span>WHO / NIH Reference Values</div>
+      <table class="ref-table">
+        <thead><tr><th>Group</th><th>Normal Hb (g/dL)</th><th>Iron RDA</th><th>Anaemia at</th></tr></thead>
+        <tbody>
+          <tr><td>Child (6 mo–11 yr)</td><td>11.0–14.0</td><td>7–11 mg/day</td><td>&lt;11.0</td></tr>
+          <tr><td>Teen Boy (12–17)</td><td>13.0–16.0</td><td>11 mg/day</td><td>&lt;13.0</td></tr>
+          <tr><td>Teen Girl (12–17)</td><td>12.0–15.5</td><td>15 mg/day</td><td>&lt;12.0</td></tr>
+          <tr><td>Adult Male</td><td>13.5–17.5</td><td>8 mg/day</td><td>&lt;13.0</td></tr>
+          <tr><td>Adult Female</td><td>12.0–15.5</td><td>18 mg/day</td><td>&lt;12.0</td></tr>
+          <tr><td>Pregnant</td><td>11.0–14.0</td><td>27 mg/day</td><td>&lt;11.0</td></tr>
+          <tr><td>Post-menopausal</td><td>12.0–15.5</td><td>8 mg/day</td><td>&lt;12.0</td></tr>
+          <tr><td>Elderly (65+)</td><td>12.0–15.0</td><td>8 mg/day</td><td>&lt;12.0</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- RIGHT: results -->
+  <div class="col2">
+
+    <div class="card">
+      <div class="ct"><span class="dot"></span>Simulation Summary</div>
+      <div id="s-summary" style="color:var(--muted);font-size:13px;text-align:center;padding:24px">
+        Configure parameters and click Run Simulation.
+      </div>
+      <div class="stat-row" id="s-stats" style="display:none">
+        <div class="sp"><div class="sk">Start Hb</div><div class="sv" id="ss-s">—<span class="su">g/dL</span></div></div>
+        <div class="sp"><div class="sk">Final Hb</div><div class="sv" id="ss-f" style="color:var(--accent)">—<span class="su">g/dL</span></div></div>
+        <div class="sp"><div class="sk">Recovery</div><div class="sv" id="ss-r">—<span class="su">wks</span></div></div>
+        <div class="sp"><div class="sk">Fe Absorbed</div><div class="sv" id="ss-fe">—<span class="su">mg</span></div></div>
+        <div class="sp"><div class="sk">Abs. Rate</div><div class="sv" id="ss-ar">—<span class="su">%</span></div></div>
+      </div>
+    </div>
+
+    <!-- Hb CHART -->
+    <div class="card">
+      <div class="ct"><span class="dot"></span>Haemoglobin Recovery Curve</div>
+      <canvas id="s-hb" style="max-height:280px"></canvas>
+    </div>
+
+    <!-- PREDICTED STRIPS TIMELINE -->
+    <div class="card">
+      <div class="ct"><span class="dot"></span>Predicted Blood Strip at Each Time Point</div>
+      <div class="tline" id="s-tline">
+        <p style="font-size:12px;color:var(--muted)">Run simulation to see predicted strip progression.</p>
+      </div>
+    </div>
+
+    <!-- WEEK TABLE -->
+    <div class="card">
+      <div class="ct"><span class="dot"></span>Week-by-Week Data</div>
+      <div class="wtw">
+        <table class="wt">
+          <thead><tr><th>Week</th><th>Hb (g/dL)</th><th>Hct (%)</th><th>Fe Abs (mg)</th><th>Abs Rate</th><th>Status</th></tr></thead>
+          <tbody id="s-tbody"><tr><td colspan="6" style="text-align:center;color:var(--muted)">No data</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SIM EXPORT -->
+    <div class="card">
+      <div class="ct"><span class="dot"></span>Export Simulation</div>
+      <div class="egrid">
+        <div class="ec" onclick="doExport('csv','s')"><div class="ei">📊</div><div class="ef">CSV</div><div class="ed">Weekly table</div></div>
+        <div class="ec" onclick="doExport('json','s')"><div class="ei">{ }</div><div class="ef">JSON</div><div class="ed">Full data</div></div>
+        <div class="ec" onclick="doExport('pdf','s')"><div class="ei">📄</div><div class="ef">PDF</div><div class="ed">Patient report</div></div>
+        <div class="ec" onclick="doExport('png','s')"><div class="ei">🖼</div><div class="ef">PNG</div><div class="ed">Charts</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div><!-- /pg-s -->
+
+<div id="toast"></div>
+
+<!-- ═══════════════════════ JAVASCRIPT ════════════════════════ -->
+<script>
+// ── STATE ────────────────────────────────────────────────────
+const S = {
+  cMode:'single', bMode:'sep', cLayer:'plasma',
+  cImages:{},     // slot -> HTMLImageElement
+  bImages:{},
+  cRegions:[],    // {id,x,y,w,h,label,rgb,hsv,lab,od,dE,conc}
+  bRegions:{},    // plasma/buffy/rbc -> {x,y,w,h}
+  calCurve:null,  // {slope,intercept,r2}
+  bloodRes:null,
+  simRes:null,
+  charts:{},
+  drawing:false, sx:0, sy:0
+};
+
+// ── NAVIGATION ───────────────────────────────────────────────
+function goTo(id){
+  // Switch page
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
+  document.getElementById('pg-'+id).classList.add('on');
+  // Sync top nav tabs
+  document.querySelectorAll('.nt').forEach(b=>b.classList.remove('on'));
+  document.querySelector(`.nt[data-tab="${id}"]`)?.classList.add('on');
+  // Sync drawer main nav items
+  document.querySelectorAll('.dnav').forEach(b=>b.classList.remove('on'));
+  document.querySelector(`.dnav[data-tab="${id}"]`)?.classList.add('on');
+  window.scrollTo({top:0,behavior:'instant'});
+}
+
+// ── DRAWER CONTROLS ──────────────────────────────────────────
+function toggleDrawer(){
+  const drawer=document.getElementById('side-drawer');
+  const overlay=document.getElementById('drawer-overlay');
+  const hamburger=document.getElementById('hamburger');
+  const isOpen=drawer.classList.contains('open');
+  if(isOpen){ closeDrawer(); }
+  else {
+    drawer.classList.add('open');
+    overlay.classList.add('on');
+    hamburger.classList.add('open');
+    document.body.style.overflow='hidden';
+  }
+}
+
+function closeDrawer(){
+  document.getElementById('side-drawer').classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('on');
+  document.getElementById('hamburger').classList.remove('open');
+  document.body.style.overflow='';
+}
+
+// Close drawer on Escape key
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeDrawer(); });
+
+// Set blood mode from drawer and sync the in-page mode buttons
+function setBModeFromDrawer(mode){
+  // Update drawer blood mode highlights
+  document.querySelectorAll('.dmode').forEach(b=>b.classList.remove('on'));
+  document.querySelector(`.dmode[data-bmode="${mode}"]`)?.classList.add('on');
+  // Update the in-page mode buttons
+  document.querySelectorAll('#pg-b .mb').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('#pg-b .mb').forEach(b=>{
+    if(b.textContent.toLowerCase().includes(
+      mode==='sep'?'layer':mode==='dil'?'serial':mode==='time'?'time':'reference'
+    )) b.classList.add('on');
+  });
+  // Actually switch the mode
+  S.bMode=mode;
+  buildBZones();
+}
+
+// Set colorimetry mode from drawer and sync in-page mode buttons
+function setCModeFromDrawer(mode){
+  // Update drawer colorimetry mode highlights
+  document.querySelectorAll('.dcmode').forEach(b=>b.classList.remove('on'));
+  document.querySelector(`.dcmode[data-cmode="${mode}"]`)?.classList.add('on');
+  // Update the in-page mode buttons
+  document.querySelectorAll('#pg-c .mb').forEach(b=>b.classList.remove('on'));
+  const labelMap={single:'single',blank:'blank',standard:'standard',calib:'calibration',compare:'compare'};
+  document.querySelectorAll('#pg-c .mb').forEach(b=>{
+    if(b.textContent.toLowerCase().includes(labelMap[mode]?.slice(0,4)||mode.slice(0,4)))
+      b.classList.add('on');
+  });
+  S.cMode=mode;
+  buildCZones();
+}
+
+// ── COLORIMETRY MODE ─────────────────────────────────────────
+const C_CONFIGS = {
+  single:   [{l:'Sample',s:'Your test strip'}],
+  blank:    [{l:'Blank (0 conc)',s:'Water + reagent'},{l:'Sample',s:'Test strip'}],
+  standard: [{l:'Standard',s:'Known conc.'},{l:'Sample',s:'Unknown'}],
+  calib:    [
+    {l:'Std 1 — 0 mg/L',s:'Blank'},
+    {l:'Std 2 — 1.56 mg/L',s:''},
+    {l:'Std 3 — 3.125 mg/L',s:''},
+    {l:'Std 4 — 6.25 mg/L',s:''},
+    {l:'Std 5 — 12.5 mg/L',s:''},
+    {l:'Std 6 — 25 mg/L',s:''},
+    {l:'Sample',s:'Unknown'}
+  ],
+  compare:[
+    {l:'Sample A',s:''},{l:'Sample B',s:''},{l:'Sample C',s:''}
+  ]
+};
+
+function cMode(m,el){
+  S.cMode=m;
+  document.querySelectorAll('#pg-c .mb').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  // Sync drawer highlight
+  document.querySelectorAll('.dcmode').forEach(b=>b.classList.remove('on'));
+  document.querySelector(`.dcmode[data-cmode="${m}"]`)?.classList.add('on');
+  buildCZones();
+}
+
+function buildCZones(){
+  const cfg = C_CONFIGS[S.cMode]||C_CONFIGS.single;
+  document.getElementById('c-zones').innerHTML = cfg.map((z,i)=>`
+    <div class="uzone" id="cz-${i}" onclick="triggerFile('cf-${i}')">
+      <input type="file" id="cf-${i}" accept="image/*"
+        onchange="loadCImg(event,${i})" style="display:none">
+      <div class="ui">📷</div>
+      <div class="ul">${z.l}</div>
+      ${z.s?`<div class="us">${z.s}</div>`:''}
+    </div>`).join('');
+}
+
+function triggerFile(id){ document.getElementById(id)?.click(); }
+
+// ── IMAGE LOADING ─────────────────────────────────────────────
+function loadCImg(ev,slot){
+  const f=ev.target.files[0]; if(!f)return;
+  const url=URL.createObjectURL(f);
+  const img=new Image();
+  img.onload=()=>{
+    S.cImages[slot]=img;
+    // show thumbnail in zone
+    const z=document.getElementById('cz-'+slot);
+    const lbl=z.querySelector('.ul')?.textContent||'';
+    z.innerHTML=`
+      <img class="thumb" src="${url}">
+      <div class="ul" style="font-size:9px">${lbl}</div>
+      <input type="file" id="cf-${slot}" accept="image/*"
+        onchange="loadCImg(event,${slot})" style="display:none">`;
+    z.classList.add('loaded');
+    z.onclick=()=>triggerFile('cf-'+slot);
+    if(slot===0) setupCCanvas(img);
+  };
+  img.src=url;
+}
+
+// ── CANVAS SETUP ──────────────────────────────────────────────
+function setupCCanvas(img){
+  const box=document.getElementById('c-cbox');
+  // remove placeholder
+  const ph=document.getElementById('c-ph');
+  if(ph) ph.style.display='none';
+
+  const cv=document.getElementById('c-cv');
+  const maxW=box.clientWidth-4||600;
+  const scale=Math.min(1,maxW/img.width);
+  cv.width =Math.round(img.width*scale);
+  cv.height=Math.round(img.height*scale);
+  cv.style.display='block';
+  S.cScale=scale; S.cImg=img;
+  drawCCanvas();
+  addCEvents(cv);
+}
+
+function drawCCanvas(){
+  const cv=document.getElementById('c-cv');
+  const ctx=cv.getContext('2d');
+  ctx.drawImage(S.cImg,0,0,cv.width,cv.height);
+  const cols=['#00d4a0','#3b82f6','#f97316','#eab308','#ef4444','#a855f7'];
+  S.cRegions.forEach((r,i)=>{
+    const c=cols[i%cols.length];
+    ctx.strokeStyle=c; ctx.lineWidth=2;
+    ctx.strokeRect(r.x,r.y,r.w,r.h);
+    ctx.fillStyle=c; ctx.font='bold 11px monospace';
+    ctx.fillText('R'+r.id,r.x+3,r.y+13);
+  });
+}
+
+function addCEvents(cv){
+  // Maps a client (screen) coordinate to actual canvas pixel coordinate,
+  // accounting for CSS scaling (canvas display size != internal pixel size on mobile)
+  function toCanvasXY(clientX, clientY){
+    const rc=cv.getBoundingClientRect();
+    const scaleX=cv.width/rc.width;
+    const scaleY=cv.height/rc.height;
+    return { x:(clientX-rc.left)*scaleX, y:(clientY-rc.top)*scaleY };
+  }
+
+  cv.onmousedown=e=>{
+    S.drawing=true;
+    const p=toCanvasXY(e.clientX,e.clientY);
+    S.sx=p.x; S.sy=p.y;
+  };
+  cv.onmousemove=e=>{
+    if(!S.drawing)return;
+    const p=toCanvasXY(e.clientX,e.clientY);
+    drawCCanvas();
+    const ctx=cv.getContext('2d');
+    ctx.strokeStyle='#00d4a0'; ctx.lineWidth=2; ctx.setLineDash([6,3]);
+    ctx.strokeRect(S.sx,S.sy,p.x-S.sx,p.y-S.sy); ctx.setLineDash([]);
+  };
+  cv.onmouseup=e=>{
+    if(!S.drawing)return; S.drawing=false;
+    const p=toCanvasXY(e.clientX,e.clientY);
+    finishCRegion(p.x,p.y);
+  };
+  cv.onmouseleave=()=>{ if(S.drawing){ S.drawing=false; drawCCanvas(); } };
+
+  function finishCRegion(x,y){
+    const rx=Math.min(S.sx,x), ry=Math.min(S.sy,y);
+    const rw=Math.abs(x-S.sx), rh=Math.abs(y-S.sy);
+    if(rw<5||rh<5)return;
+    const id=S.cRegions.length+1;
+    const lbl=document.getElementById('c-name').value+' R'+id;
+    S.cRegions.push({id,x:rx,y:ry,w:rw,h:rh,label:lbl});
+    drawCCanvas();
+    measureRegion(S.cRegions[S.cRegions.length-1]);
+  }
+
+  // ── Touch: single-finger drag draws a region. Two-finger pinch zooms (handled separately, drawing is suppressed). ──
+  let touchDrawing=false, pinching=false;
+  cv.ontouchstart=e=>{
+    if(e.touches.length>=2){ pinching=true; touchDrawing=false; S.drawing=false; return; }
+    pinching=false;
+    e.preventDefault();
+    const t=e.touches[0];
+    const p=toCanvasXY(t.clientX,t.clientY);
+    touchDrawing=true; S.drawing=true; S.sx=p.x; S.sy=p.y;
+  };
+  cv.ontouchmove=e=>{
+    if(pinching||e.touches.length>=2){ pinching=true; touchDrawing=false; S.drawing=false; return; }
+    if(!touchDrawing)return;
+    e.preventDefault();
+    const t=e.touches[0];
+    const p=toCanvasXY(t.clientX,t.clientY);
+    drawCCanvas();
+    const ctx=cv.getContext('2d');
+    ctx.strokeStyle='#00d4a0'; ctx.lineWidth=3; ctx.setLineDash([8,4]);
+    ctx.strokeRect(S.sx,S.sy,p.x-S.sx,p.y-S.sy); ctx.setLineDash([]);
+  };
+  cv.ontouchend=e=>{
+    if(pinching){ pinching=false; return; }
+    if(!touchDrawing)return;
+    touchDrawing=false; S.drawing=false;
+    e.preventDefault();
+    const t=e.changedTouches[0];
+    const p=toCanvasXY(t.clientX,t.clientY);
+    finishCRegion(p.x,p.y);
+  };
+
+  setupPinchZoom(cv, 'c');
+}
+
+// ── PINCH-TO-ZOOM for touch devices ─────────────────────────────
+// Applies a CSS transform-based zoom to the canvas wrapper so users on
+// phones can zoom into small reaction spots before drawing a region box.
+function setupPinchZoom(cv, prefix){
+  const wrap = cv.closest('.cbox');
+  let scale=1, lastDist=0, originX=0, originY=0;
+  wrap.style.transformOrigin='0 0';
+  wrap.addEventListener('touchstart', e=>{
+    if(e.touches.length===2){
+      lastDist=Math.hypot(
+        e.touches[0].clientX-e.touches[1].clientX,
+        e.touches[0].clientY-e.touches[1].clientY
+      );
+    }
+  }, {passive:true});
+  wrap.addEventListener('touchmove', e=>{
+    if(e.touches.length===2){
+      e.preventDefault();
+      const dist=Math.hypot(
+        e.touches[0].clientX-e.touches[1].clientX,
+        e.touches[0].clientY-e.touches[1].clientY
+      );
+      if(lastDist>0){
+        scale*=dist/lastDist;
+        scale=Math.min(4,Math.max(1,scale));
+        cv.style.transform=`scale(${scale})`;
+        cv.style.transformOrigin='0 0';
+      }
+      lastDist=dist;
+    }
+  }, {passive:false});
+  wrap.addEventListener('touchend', e=>{
+    if(e.touches.length<2) lastDist=0;
+  }, {passive:true});
+  // expose a reset so "Clear Regions" can also reset zoom
+  cv.dataset.zoomReset='1';
+  wrap._resetZoom=()=>{ scale=1; cv.style.transform='scale(1)'; };
+}
+
+
+function clearAll(){
+  S.cRegions=[];
+  if(S.cImg) drawCCanvas();
+  document.getElementById('c-cbox')._resetZoom?.();
+  document.getElementById('c-results').innerHTML=
+    '<p style="font-size:12px;color:var(--muted);text-align:center;padding:20px">Regions cleared.</p>';
+  toast('Regions cleared');
+}
+
+function analyseAll(){
+  if(!S.cImg||S.cRegions.length===0){toast('Draw at least one region first');return;}
+  S.cRegions.forEach(r=>measureRegion(r));
+  toast('✓ All regions analysed');
+}
+
+// ── COLOUR MATHS ──────────────────────────────────────────────
+function getPixels(cv,x,y,w,h){
+  return cv.getContext('2d').getImageData(
+    Math.round(x),Math.round(y),Math.max(1,Math.round(w)),Math.max(1,Math.round(h))
+  ).data;
+}
+function meanRGB(px){
+  let r=0,g=0,b=0,n=0;
+  for(let i=0;i<px.length;i+=4){r+=px[i];g+=px[i+1];b+=px[i+2];n++;}
+  return{R:Math.round(r/n),G:Math.round(g/n),B:Math.round(b/n)};
+}
+function toHSV(r,g,b){
+  r/=255;g/=255;b/=255;
+  const M=Math.max(r,g,b),m=Math.min(r,g,b),d=M-m;
+  let h=0,s=M?d/M:0,v=M;
+  if(d){
+    if(M===r)h=((g-b)/d)%6;
+    else if(M===g)h=(b-r)/d+2;
+    else h=(r-g)/d+4;
+    h=Math.round(h*60);if(h<0)h+=360;
+  }
+  return{H:h,S:+(s*100).toFixed(1),V:+(v*100).toFixed(1)};
+}
+function toLAB(r,g,b){
+  let R=r/255,G=g/255,B=b/255;
+  const lin=v=>v>.04045?Math.pow((v+.055)/1.055,2.4):v/12.92;
+  R=lin(R);G=lin(G);B=lin(B);
+  let X=R*.4124+G*.3576+B*.1805,Y=R*.2126+G*.7152+B*.0722,Z=R*.0193+G*.1192+B*.9505;
+  X/=.95047;Y/=1;Z/=1.08883;
+  const f=t=>t>.008856?Math.cbrt(t):7.787*t+16/116;
+  return{L:+(116*f(Y)-16).toFixed(1),A:+(500*(f(X)-f(Y))).toFixed(1),B:+(200*(f(Y)-f(Z))).toFixed(1)};
+}
+function toOD(rgb,blank={R:240,G:240,B:240}){
+  const I=(rgb.R+rgb.G+rgb.B)/3, I0=(blank.R+blank.G+blank.B)/3;
+  return+(Math.max(0,Math.log10(I0/Math.max(1,I)))).toFixed(4);
+}
+function dE(l1,l2){
+  return+Math.sqrt((l1.L-l2.L)**2+(l1.A-l2.A)**2+(l1.B-l2.B)**2).toFixed(2);
+}
+function concFromOD(od){
+  if(!S.calCurve)return null;
+  return+Math.max(0,(od-S.calCurve.intercept)/S.calCurve.slope).toFixed(3);
+}
+function classify(hb,grp){
+  const t={child:11,'teen-m':13,'teen-f':12,'adult-m':13,'adult-f':12,pregnant:11,'post-m':12,elder:12};
+  const thr=t[grp]??12;
+  if(hb>=thr) return{l:'Normal',c:'bg'};
+  if(hb>=10)  return{l:'Mild Anaemia',c:'by'};
+  if(hb>=7)   return{l:'Moderate Anaemia',c:'bo'};
+  return{l:'Severe Anaemia',c:'br'};
+}
+
+function measureRegion(r){
+  const cv=document.getElementById('c-cv');
+  const px=getPixels(cv,r.x,r.y,r.w,r.h);
+  const rgb=meanRGB(px);
+  const hsv=toHSV(rgb.R,rgb.G,rgb.B);
+  const lab=toLAB(rgb.R,rgb.G,rgb.B);
+  const blank=S.cImages[1]?getBlankRGB():null;
+  const od=toOD(rgb,blank);
+  const de=dE(lab,{L:96,A:0,B:2});
+  const conc=concFromOD(od);
+  Object.assign(r,{rgb,hsv,lab,od,dE:de,conc});
+  const idx=S.cRegions.findIndex(x=>x.id===r.id);
+  if(idx>=0)S.cRegions[idx]=r;
+  renderCResults();
+  updateCCharts(r,px);
+}
+
+function getBlankRGB(){
+  const cv=document.getElementById('c-cv');
+  const r=S.cRegions.find(x=>x.label.toLowerCase().includes('blank'));
+  if(r){const px=getPixels(cv,r.x,r.y,r.w,r.h);return meanRGB(px);}
+  return{R:240,G:240,B:240};
+}
+
+// ── RENDER REGION RESULTS ─────────────────────────────────────
+function renderCResults(){
+  if(!S.cRegions.some(r=>r.rgb)){
+    document.getElementById('c-results').innerHTML=
+      '<p style="font-size:12px;color:var(--muted);text-align:center;padding:20px">No results yet.</p>';
+    return;
+  }
+  let h=`<div style="overflow-x:auto"><table class="rtbl"><thead><tr>
+    <th>#</th><th>Label</th><th>Color</th>
+    <th>R</th><th>G</th><th>B</th>
+    <th>Hue°</th><th>Sat%</th><th>Val%</th>
+    <th>LAB L</th><th>LAB A</th><th>LAB B</th>
+    <th>OD</th><th>ΔE</th>
+    ${S.calCurve?'<th>Conc (mg/L)</th>':''}
+  </tr></thead><tbody>`;
+  S.cRegions.filter(r=>r.rgb).forEach(r=>{
+    h+=`<tr>
+      <td>R${r.id}</td>
+      <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis">${r.label}</td>
+      <td><span class="sw" style="background:rgb(${r.rgb.R},${r.rgb.G},${r.rgb.B})"></span></td>
+      <td>${r.rgb.R}</td><td>${r.rgb.G}</td><td>${r.rgb.B}</td>
+      <td>${r.hsv.H}</td><td>${r.hsv.S}</td><td>${r.hsv.V}</td>
+      <td>${r.lab.L}</td><td>${r.lab.A}</td><td>${r.lab.B}</td>
+      <td>${r.od}</td><td>${r.dE}</td>
+      ${S.calCurve?`<td><b>${r.conc!=null?r.conc+' mg/L':'—'}</b></td>`:''}
+    </tr>`;
+  });
+  h+='</tbody></table></div>';
+  document.getElementById('c-results').innerHTML=h;
+}
+
+// ── CHARTS ────────────────────────────────────────────────────
+function mk(id,config){
+  if(S.charts[id])S.charts[id].destroy();
+  const el=document.getElementById(id);
+  if(!el)return;
+  S.charts[id]=new Chart(el,config);
+}
+const gridOpts={color:'#2c3548'};
+const tickOpts={color:'#64748b',font:{size:9}};
+const legOpts={labels:{color:'#64748b',font:{size:9}}};
+
+function updateCCharts(r,px){
+  // Histogram
+  const rH=new Array(32).fill(0),gH=new Array(32).fill(0),bH=new Array(32).fill(0);
+  for(let i=0;i<px.length;i+=4){rH[px[i]>>3]++;gH[px[i+1]>>3]++;bH[px[i+2]>>3]++;}
+  const lx=Array.from({length:32},(_,i)=>i*8);
+  mk('c-hist',{type:'line',data:{labels:lx,datasets:[
+    {label:'R',data:rH,borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.1)',fill:true,tension:.4,pointRadius:0,borderWidth:1.5},
+    {label:'G',data:gH,borderColor:'#00d4a0',backgroundColor:'rgba(0,212,160,.1)',fill:true,tension:.4,pointRadius:0,borderWidth:1.5},
+    {label:'B',data:bH,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.1)',fill:true,tension:.4,pointRadius:0,borderWidth:1.5},
+  ]},options:{responsive:true,plugins:{legend:legOpts},
+    scales:{x:{ticks:tickOpts,grid:gridOpts},y:{ticks:tickOpts,grid:gridOpts}}}});
+
+  // HSV
+  const rs=S.cRegions.filter(x=>x.hsv);
+  mk('c-hsv',{type:'bar',data:{labels:rs.map(x=>'R'+x.id),datasets:[
+    {label:'Hue°/3.6',data:rs.map(x=>x.hsv.H/3.6),backgroundColor:'rgba(234,179,8,.7)'},
+    {label:'Sat%',data:rs.map(x=>x.hsv.S),backgroundColor:'rgba(0,212,160,.7)'},
+    {label:'Val%',data:rs.map(x=>x.hsv.V),backgroundColor:'rgba(59,130,246,.7)'},
+  ]},options:{responsive:true,plugins:{legend:legOpts},
+    scales:{x:{ticks:tickOpts,grid:gridOpts},y:{ticks:tickOpts,grid:gridOpts,max:100}}}});
+
+  // Compare OD/dE
+  mk('c-comp',{type:'bar',data:{labels:rs.map(x=>'R'+x.id),datasets:[
+    {label:'OD',data:rs.map(x=>x.od),backgroundColor:'rgba(249,115,22,.7)'},
+    {label:'ΔE/50',data:rs.map(x=>x.dE/50),backgroundColor:'rgba(168,85,247,.7)'},
+    {label:'LAB-A/50',data:rs.map(x=>x.lab.A/50),backgroundColor:'rgba(239,68,68,.7)'},
+  ]},options:{responsive:true,plugins:{legend:legOpts},
+    scales:{x:{ticks:tickOpts,grid:gridOpts},y:{ticks:tickOpts,grid:gridOpts}}}});
+
+  if(S.calCurve) drawCurveChart();
+}
+
+function drawCurveChart(){
+  const c=S.calCurve;
+  const xs=Array.from({length:60},(_,i)=>i); // 0-59 mg/L
+  const ys=xs.map(x=>c.slope*x+c.intercept);
+  const pts=S.cRegions.filter(r=>r.conc!=null).map(r=>({x:r.conc,y:r.od}));
+  mk('c-curve',{type:'scatter',data:{datasets:[
+    {label:`y=${c.slope.toFixed(4)}x+${c.intercept.toFixed(4)} R²=${c.r2.toFixed(4)}`,
+      data:xs.map((x,i)=>({x,y:ys[i]})),type:'line',borderColor:'#3b82f6',pointRadius:0,fill:false},
+    {label:'Your Samples',data:pts,backgroundColor:'#00d4a0',pointRadius:6},
+  ]},options:{responsive:true,plugins:{legend:legOpts},
+    scales:{
+      x:{title:{display:true,text:'Conc (mg/L)',color:'#64748b'},ticks:tickOpts,grid:gridOpts},
+      y:{title:{display:true,text:'OD',color:'#64748b'},ticks:tickOpts,grid:gridOpts}
+    }}});
+}
+
+// ── CALIBRATION ───────────────────────────────────────────────
+const CAL_DEFAULTS=[
+  [0,0],[1.56,0.070],[3.125,0.140],[6.25,0.277],[12.5,0.508],[25,0.858],[50,1.190]
+];
+function buildCalRows(){
+  const c=document.getElementById('cal-rows');
+  c.innerHTML='';
+  CAL_DEFAULTS.forEach(([conc,abs],i)=>{
+    const d=document.createElement('div');
+    d.className='cal-row';
+    d.innerHTML=`<span class="rn">${i+1}</span>
+      <input type="number" class="cc" placeholder="conc" value="${conc||''}" step="any">
+      <input type="number" class="ca" placeholder="OD / Abs" value="${abs||''}" step="any">`;
+    c.appendChild(d);
+  });
+}
+function addCalRow(){
+  const c=document.getElementById('cal-rows');
+  const d=document.createElement('div'); d.className='cal-row';
+  d.innerHTML=`<span class="rn">${c.children.length+1}</span>
+    <input type="number" class="cc" placeholder="conc" step="any">
+    <input type="number" class="ca" placeholder="OD / Abs" step="any">`;
+  c.appendChild(d);
+}
+function buildCurve(){
+  const cc=[...document.querySelectorAll('.cc')];
+  const ca=[...document.querySelectorAll('.ca')];
+  const pts=[];
+  cc.forEach((ci,i)=>{
+    const x=parseFloat(ci.value),y=parseFloat(ca[i].value);
+    if(!isNaN(x)&&!isNaN(y))pts.push({x,y});
+  });
+  if(pts.length<3){toast('Need at least 3 data points');return;}
+  const n=pts.length;
+  const sx=pts.reduce((a,p)=>a+p.x,0), sy=pts.reduce((a,p)=>a+p.y,0);
+  const sxy=pts.reduce((a,p)=>a+p.x*p.y,0), sx2=pts.reduce((a,p)=>a+p.x*p.x,0);
+  const slope=(n*sxy-sx*sy)/(n*sx2-sx*sx);
+  const intercept=(sy-slope*sx)/n;
+  const ym=sy/n;
+  const r2=1-pts.reduce((a,p)=>a+(p.y-(slope*p.x+intercept))**2,0)/pts.reduce((a,p)=>a+(p.y-ym)**2,0);
+  S.calCurve={slope,intercept,r2,pts};
+  document.getElementById('cal-eq').innerHTML=
+    `✓ <b>Absorbance = ${slope.toFixed(5)} × Conc + ${intercept.toFixed(5)}</b><br>
+     R² = <b>${r2.toFixed(4)}</b> ${r2>.99?'✅ Excellent':r2>.95?'✓ Good':'⚠ Check data — values should increase smoothly'}`;
+  S.cRegions.forEach(r=>{if(r.od!=null)r.conc=concFromOD(r.od);});
+  renderCResults();
+  drawCurveChart();
+  toast('✓ Calibration curve built');
+}
+
+// ── BLOOD CANVAS ──────────────────────────────────────────────
+// ── BLOOD ANALYSIS — COMPLETE REWRITE ───────────────────────────
+// Healthy reference values for Delta-E and flag detection
+const HEALTHY = {
+  plasma : { rgb:[228,212,160], lab:{L:86,A:2,B:22} },
+  buffy  : { rgb:[210,205,190], lab:{L:82,A:1,B:10} },
+  rbc    : { rgb:[180,38,40],   lab:{L:38,A:42,B:20} },
+};
+
+// Pallor index: how pale are RBCs vs healthy (0=normal,100=severely pale)
+function pallor(labL){ return +Math.min(100,Math.max(0,(labL-38)/0.62)).toFixed(1); }
+
+// Icterus (yellow plasma): LAB B > 32 is clinically elevated bilirubin proxy
+function icterusFlag(lab){ return lab.B>32; }
+
+// Lipemia (milky plasma): high lightness + very low saturation
+function lipemiaFlag(hsv,lab){ return lab.L>88 && hsv.S<12; }
+
+// Buffy coat visibility score (0–3)
+function buffyScore(hpct, sat){
+  if(hpct<1)  return {n:0,l:'Not visible'};
+  if(hpct<2)  return {n:1,l:'Faintly visible'};
+  if(hpct<5)  return {n:2,l:'Clearly visible'};
+  return            {n:3,l:'Abnormally thick — possible infection/inflammation'};
+}
+
+function bMode(m,el){
+  S.bMode=m;
+  document.querySelectorAll('#pg-b .mb').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  // Sync drawer highlight
+  document.querySelectorAll('.dmode').forEach(b=>b.classList.remove('on'));
+  document.querySelector(`.dmode[data-bmode="${m}"]`)?.classList.add('on');
+  S.bImages={};
+  buildBZones();
+}
+
+function buildBZones(){
+  const zones={
+    sep : [{l:'Blood Strip',s:'Full separation strip'}],
+    dil : [
+      {l:'1/1 Full',s:'Undiluted'},{l:'1/2',s:'Half'},{l:'1/4',s:'Quarter'},
+      {l:'1/8',s:''},{l:'1/16',s:'Most dilute'}
+    ],
+    time: [{l:'Week 0',s:'Baseline'},{l:'Week 4',s:''},{l:'Week 8',s:''},{l:'Week 12',s:''}],
+    ref : [{l:'Your Sample',s:''},{l:'Healthy Ref',s:'Control strip'}],
+  };
+  const cfg=zones[S.bMode]||zones.sep;
+  document.getElementById('b-zones').innerHTML=cfg.map((z,i)=>`
+    <div class="uzone" id="bz-${i}" onclick="triggerFile('bf-${i}')">
+      <input type="file" id="bf-${i}" accept="image/*"
+        onchange="loadBImg(event,${i})" style="display:none">
+      <div class="ui">🩸</div>
+      <div class="ul">${z.l}</div>
+      ${z.s?`<div class="us">${z.s}</div>`:''}
+    </div>`).join('');
+  // reset multi-slot results
+  S.dilResults=[];
+  S.timeResults=[];
+}
+
+function loadBImg(ev,slot){
+  const f=ev.target.files[0]; if(!f)return;
+  const url=URL.createObjectURL(f);
+  const img=new Image();
+  img.onload=()=>{
+    S.bImages=S.bImages||{};
+    S.bImages[slot]=img;
+    const z=document.getElementById('bz-'+slot);
+    const lbl=z.querySelector('.ul')?.textContent||'';
+    z.innerHTML=`<img class="thumb" src="${url}">
+      <div class="ul" style="font-size:9px">${lbl}</div>
+      <input type="file" id="bf-${slot}" accept="image/*"
+        onchange="loadBImg(event,${slot})" style="display:none">`;
+    z.classList.add('loaded');
+    z.onclick=()=>triggerFile('bf-'+slot);
+    // Always make slot 0 the active drawing canvas
+    if(slot===0) setupBCanvas(img);
+    // For multi-slot modes: show a hint
+    if(slot>0 && (S.bMode==='dil'||S.bMode==='time')){
+      toast('Image '+(slot+1)+' loaded. Switch canvas to analyse it.');
+    }
+  };
+  img.src=url;
+}
+
+// Allow switching active canvas to any loaded slot (multi-mode)
+function switchActiveSlot(slot){
+  const img=S.bImages?.[slot];
+  if(!img){ toast('Upload image for slot '+(slot+1)+' first'); return; }
+  S.activeSlot=slot;
+  setupBCanvas(img);
+  toast('Now viewing slot '+(slot+1));
+}
+
+function setupBCanvas(img){
+  const box=document.getElementById('b-cbox');
+  const ph=document.getElementById('b-ph');
+  if(ph) ph.style.display='none';
+  const cv=document.getElementById('b-cv');
+  const maxW=box.clientWidth-4||600;
+  const scale=Math.min(1,maxW/img.width);
+  cv.width=Math.round(img.width*scale);
+  cv.height=Math.round(img.height*scale);
+  cv.style.display='block';
+  S.bScale=scale; S.bImg=img;
+  S.bRegions={};
+  drawBCanvas();
+  addBEvents(cv);
+}
+
+function drawBCanvas(){
+  const cv=document.getElementById('b-cv');
+  if(!S.bImg||!cv.width)return;
+  const ctx=cv.getContext('2d');
+  ctx.drawImage(S.bImg,0,0,cv.width,cv.height);
+  const lc={plasma:'#f0d060',buffy:'#ffffff',rbc:'#ef4444'};
+  Object.entries(S.bRegions).forEach(([layer,r])=>{
+    ctx.strokeStyle=lc[layer]||'#fff'; ctx.lineWidth=2;
+    ctx.strokeRect(r.x,r.y,r.w,r.h);
+    ctx.fillStyle=lc[layer]; ctx.font='bold 10px monospace';
+    ctx.fillText(layer.toUpperCase(),r.x+3,r.y+13);
+  });
+}
+
+function bLayer(l,el){
+  S.cLayer=l;
+  document.querySelectorAll('.lb').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+}
+
+function addBEvents(cv){
+  let bdraw=false,bsx,bsy;
+  function toXY(clientX,clientY){
+    const rc=cv.getBoundingClientRect();
+    return{x:(clientX-rc.left)*(cv.width/rc.width),y:(clientY-rc.top)*(cv.height/rc.height)};
+  }
+  cv.onmousedown=e=>{ bdraw=true; const p=toXY(e.clientX,e.clientY); bsx=p.x; bsy=p.y; };
+  cv.onmousemove=e=>{
+    if(!bdraw)return;
+    const p=toXY(e.clientX,e.clientY);
+    drawBCanvas();
+    const lc={plasma:'#f0d060',buffy:'#ffffff',rbc:'#ef4444'};
+    const ctx=cv.getContext('2d');
+    ctx.strokeStyle=lc[S.cLayer]||'#fff'; ctx.lineWidth=2; ctx.setLineDash([6,3]);
+    ctx.strokeRect(bsx,bsy,p.x-bsx,p.y-bsy); ctx.setLineDash([]);
+  };
+  cv.onmouseup=e=>{ if(!bdraw)return; bdraw=false; const p=toXY(e.clientX,e.clientY); finishB(p.x,p.y); };
+  cv.onmouseleave=()=>{ if(bdraw){bdraw=false;drawBCanvas();} };
+
+  function finishB(x,y){
+    const rx=Math.min(bsx,x),ry=Math.min(bsy,y),rw=Math.abs(x-bsx),rh=Math.abs(y-bsy);
+    if(rw<5||rh<5)return;
+    S.bRegions[S.cLayer]={x:rx,y:ry,w:rw,h:rh};
+    drawBCanvas(); toast('✓ '+S.cLayer+' region set');
+  }
+
+  let tDraw=false,pinch=false;
+  cv.ontouchstart=e=>{
+    if(e.touches.length>=2){pinch=true;tDraw=false;bdraw=false;return;}
+    pinch=false; e.preventDefault();
+    const t=e.touches[0],p=toXY(t.clientX,t.clientY);
+    tDraw=true; bdraw=true; bsx=p.x; bsy=p.y;
+  };
+  cv.ontouchmove=e=>{
+    if(pinch||e.touches.length>=2){pinch=true;tDraw=false;bdraw=false;return;}
+    if(!tDraw)return; e.preventDefault();
+    const t=e.touches[0],p=toXY(t.clientX,t.clientY);
+    drawBCanvas();
+    const lc={plasma:'#f0d060',buffy:'#ffffff',rbc:'#ef4444'};
+    const ctx=cv.getContext('2d');
+    ctx.strokeStyle=lc[S.cLayer]||'#fff'; ctx.lineWidth=3; ctx.setLineDash([8,4]);
+    ctx.strokeRect(bsx,bsy,p.x-bsx,p.y-bsy); ctx.setLineDash([]);
+  };
+  cv.ontouchend=e=>{
+    if(pinch){pinch=false;return;} if(!tDraw)return;
+    tDraw=false; bdraw=false; e.preventDefault();
+    const t=e.changedTouches[0],p=toXY(t.clientX,t.clientY);
+    finishB(p.x,p.y);
+  };
+  setupPinchZoom(cv,'b');
+}
+
+function clearBlood(){
+  S.bRegions={};
+  if(S.bImg)drawBCanvas();
+  document.getElementById('b-cbox')._resetZoom?.();
+  toast('Blood regions cleared');
+}
+
+function autoDetect(){
+  const cv=document.getElementById('b-cv');
+  if(!cv.width){toast('Upload image first');return;}
+  const h=cv.height,w=cv.width;
+  S.bRegions={
+    plasma:{x:8,y:0,            w:w-16,h:Math.round(h*.52)},
+    buffy: {x:8,y:Math.round(h*.52),w:w-16,h:Math.round(h*.05)},
+    rbc:   {x:8,y:Math.round(h*.57),w:w-16,h:Math.round(h*.43)}
+  };
+  drawBCanvas();
+  toast('Auto-regions set — adjust if needed');
+}
+
+// ── CORE LAYER MEASUREMENT ──────────────────────────────────────
+function measureLayers(cv, regions){
+  const H=cv.height;
+  const layers={};
+  let pH=0,bH=0,rH=0;
+  Object.entries(regions).forEach(([name,r])=>{
+    const px=getPixels(cv,r.x,r.y,r.w,r.h);
+    const rgb=meanRGB(px);
+    const hsv=toHSV(rgb.R,rgb.G,rgb.B);
+    const lab=toLAB(rgb.R,rgb.G,rgb.B);
+    const od =toOD(rgb);
+    const ref=HEALTHY[name]||{lab:{L:50,A:0,B:0}};
+    const de =dE(lab,ref.lab);
+    layers[name]={rgb,hsv,lab,od,de,hpx:r.h,hpct:+((r.h/H)*100).toFixed(1),rawPx:px};
+    if(name==='plasma')pH=r.h;
+    if(name==='buffy') bH=r.h;
+    if(name==='rbc')   rH=r.h;
+  });
+  const tot=pH+bH+rH||1;
+  const hct=+(rH/tot*100).toFixed(1);
+  const hb =+(hct/3).toFixed(1);
+  const pp =+(pH/tot*100).toFixed(1);
+  const bp =+(bH/tot*100).toFixed(1);
+
+  // Clinical enrichment
+  const flags={};
+  if(layers.plasma){
+    flags.icterus=icterusFlag(layers.plasma.lab);
+    flags.lipemia=lipemiaFlag(layers.plasma.hsv,layers.plasma.lab);
+    flags.plasmaClarity=+(100-layers.plasma.de).toFixed(1);
+  }
+  if(layers.buffy){
+    flags.buffyScore=buffyScore(bp,layers.buffy.hsv.S);
+  }
+  if(layers.rbc){
+    flags.pallorIndex=pallor(layers.rbc.lab.L);
+  }
+
+  const age=parseInt(document.getElementById('b-age').value)||25;
+  const sex=document.getElementById('b-sex').value||'female';
+  const grp=age<12?'child':age<18?(sex==='male'?'teen-m':'teen-f'):(sex==='male'?'adult-m':'adult-f');
+  const cls=classify(hb,grp);
+
+  return{layers,hct,hb,pp,bp,cls,flags,pid:document.getElementById('b-pid').value,date:new Date().toISOString().split('T')[0]};
+}
+
+function analyseBlood(){
+  const cv=document.getElementById('b-cv');
+  if(!cv.width){toast('Upload a blood strip image first');return;}
+  if(Object.keys(S.bRegions).length===0){toast('Select at least one layer region first');return;}
+
+  if(S.bMode==='sep'||S.bMode==='ref'){
+    // Single strip analysis
+    S.bloodRes=measureLayers(cv,S.bRegions);
+    renderBloodResults(S.bloodRes);
+    toast('✓ Blood analysis complete');
+
+  } else if(S.bMode==='dil'){
+    // Serial dilution: analyse all loaded slots, build Hb response curve
+    S.dilResults=[];
+    const slots=Object.keys(S.bImages||{}).map(Number).sort();
+    if(slots.length<2){toast('Upload at least 2 dilution images first');return;}
+    // For each slot: auto-detect RBC region and measure it
+    slots.forEach(slot=>{
+      const img=S.bImages[slot];
+      const offscreen=document.createElement('canvas');
+      const scale=Math.min(1,600/img.width);
+      offscreen.width=Math.round(img.width*scale);
+      offscreen.height=Math.round(img.height*scale);
+      offscreen.getContext('2d').drawImage(img,0,0,offscreen.width,offscreen.height);
+      const h=offscreen.height,w=offscreen.width;
+      const autoReg={
+        plasma:{x:4,y:0,w:w-8,h:Math.round(h*.52)},
+        buffy: {x:4,y:Math.round(h*.52),w:w-8,h:Math.round(h*.05)},
+        rbc:   {x:4,y:Math.round(h*.57),w:w-8,h:Math.round(h*.43)}
+      };
+      const res=measureLayers(offscreen,autoReg);
+      // dilution factor: 1, 0.5, 0.25, 0.125, 0.0625
+      const dilFactor=1/Math.pow(2,slot);
+      S.dilResults.push({slot,dilFactor,label:['1/1','1/2','1/4','1/8','1/16'][slot]||('1/'+(slot+1)),...res});
+    });
+    // Also run on current canvas with manual regions if set
+    if(Object.keys(S.bRegions).length>0){
+      S.bloodRes=measureLayers(cv,S.bRegions);
+    } else {
+      S.bloodRes=S.dilResults[0]||null;
+    }
+    renderDilutionResults();
+    toast('✓ Serial dilution analysis complete — '+S.dilResults.length+' strips analysed');
+
+  } else if(S.bMode==='time'){
+    // Time points: analyse all loaded strips
+    S.timeResults=[];
+    const labels=['Week 0','Week 4','Week 8','Week 12'];
+    const slots=Object.keys(S.bImages||{}).map(Number).sort();
+    if(slots.length<2){toast('Upload at least 2 time-point images first');return;}
+    slots.forEach(slot=>{
+      const img=S.bImages[slot];
+      const offscreen=document.createElement('canvas');
+      const scale=Math.min(1,600/img.width);
+      offscreen.width=Math.round(img.width*scale);
+      offscreen.height=Math.round(img.height*scale);
+      offscreen.getContext('2d').drawImage(img,0,0,offscreen.width,offscreen.height);
+      const h=offscreen.height,w=offscreen.width;
+      const autoReg={
+        plasma:{x:4,y:0,w:w-8,h:Math.round(h*.52)},
+        buffy: {x:4,y:Math.round(h*.52),w:w-8,h:Math.round(h*.05)},
+        rbc:   {x:4,y:Math.round(h*.57),w:w-8,h:Math.round(h*.43)}
+      };
+      const res=measureLayers(offscreen,autoReg);
+      S.timeResults.push({slot,label:labels[slot]||('Week '+(slot*4)),...res});
+    });
+    S.bloodRes=S.timeResults[0]||null;
+    renderTimeResults();
+    toast('✓ Time-point analysis complete — '+S.timeResults.length+' strips analysed');
+  }
+}
+
+// ── RENDER: SINGLE STRIP ────────────────────────────────────────
+function renderBloodResults(r){
+  const el=document.getElementById('b-results');
+
+  // Clinical flags block
+  const f=r.flags||{};
+  let flagsHtml='';
+  if(f.icterus)          flagsHtml+=`<span class="badge by" style="margin-right:4px">⚠ Icterus (yellow plasma)</span>`;
+  if(f.lipemia)          flagsHtml+=`<span class="badge by" style="margin-right:4px">⚠ Lipemia (milky plasma)</span>`;
+  if(f.buffyScore?.n>=2) flagsHtml+=`<span class="badge bo" style="margin-right:4px">⚠ ${f.buffyScore.l}</span>`;
+  if(f.pallorIndex>30)   flagsHtml+=`<span class="badge br" style="margin-right:4px">⚠ Pallor index ${f.pallorIndex}%</span>`;
+
+  // Main measurements table
+  let h=`
+    ${flagsHtml?`<div style="margin-bottom:10px;padding:8px;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:6px">${flagsHtml}</div>`:''}
+    <div style="overflow-x:auto"><table class="rtbl"><thead><tr>
+      <th>Layer</th><th>Color</th><th>Height%</th>
+      <th>R</th><th>G</th><th>B</th>
+      <th>Hue°</th><th>Sat%</th>
+      <th>LAB L</th><th>LAB A</th><th>LAB B</th>
+      <th>OD</th><th>ΔE vs Healthy</th>
+    </tr></thead><tbody>`;
+
+  ['plasma','buffy','rbc'].forEach(name=>{
+    const l=r.layers[name]; if(!l)return;
+    const deColor=l.de<10?'var(--accent)':l.de<25?'var(--yellow)':'var(--red)';
+    h+=`<tr>
+      <td><b>${name.toUpperCase()}</b></td>
+      <td><span class="sw" style="background:rgb(${l.rgb.R},${l.rgb.G},${l.rgb.B})"></span></td>
+      <td>${l.hpct}%</td>
+      <td>${l.rgb.R}</td><td>${l.rgb.G}</td><td>${l.rgb.B}</td>
+      <td>${l.hsv.H}</td><td>${l.hsv.S}</td>
+      <td>${l.lab.L}</td><td>${l.lab.A}</td><td>${l.lab.B}</td>
+      <td>${l.od}</td>
+      <td style="color:${deColor};font-weight:700">${l.de}</td>
+    </tr>`;
+  });
+  h+=`</tbody></table></div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px;font-size:11px">
+    <div style="background:var(--s2);border-radius:6px;padding:8px">
+      <div style="color:var(--muted);font-size:10px;font-weight:700;margin-bottom:3px">PALLOR INDEX</div>
+      <div style="font-size:18px;font-weight:800;color:${(f.pallorIndex||0)>30?'var(--red)':'var(--accent)'}">${f.pallorIndex??'—'}%</div>
+      <div style="color:var(--muted);font-size:10px">${(f.pallorIndex||0)>60?'Severe pallor':(f.pallorIndex||0)>30?'Moderate pallor':'Normal RBC colour'}</div>
+    </div>
+    <div style="background:var(--s2);border-radius:6px;padding:8px">
+      <div style="color:var(--muted);font-size:10px;font-weight:700;margin-bottom:3px">BUFFY COAT</div>
+      <div style="font-size:14px;font-weight:700">${f.buffyScore?.l??'—'}</div>
+      <div style="color:var(--muted);font-size:10px">Score: ${f.buffyScore?.n??'—'}/3</div>
+    </div>
+    <div style="background:var(--s2);border-radius:6px;padding:8px">
+      <div style="color:var(--muted);font-size:10px;font-weight:700;margin-bottom:3px">PLASMA</div>
+      <div style="font-size:14px;font-weight:700">${f.icterus?'Icteric':f.lipemia?'Lipemic':'Clear'}</div>
+      <div style="color:var(--muted);font-size:10px">Clarity: ${f.plasmaClarity??'—'}%</div>
+    </div>
+  </div>`;
+
+  el.innerHTML=h;
+
+  // Update summary panel
+  document.getElementById('r-hct').textContent=r.hct+'%';
+  document.getElementById('r-hb').textContent=r.hb+' g/dL';
+  document.getElementById('r-pp').textContent=r.pp+'%';
+  document.getElementById('r-bp').textContent=r.bp+'%';
+  document.getElementById('r-cls').innerHTML=`<span class="badge ${r.cls.c}">${r.cls.l}</span>`;
+
+  // Strip visual
+  if(r.layers.plasma){const l=r.layers.plasma;document.getElementById('sl-p').style.cssText+=`;background:rgb(${l.rgb.R},${l.rgb.G},${l.rgb.B});height:${r.pp}%`;}
+  if(r.layers.buffy) {const l=r.layers.buffy; document.getElementById('sl-b').style.cssText+=`;background:rgb(${l.rgb.R},${l.rgb.G},${l.rgb.B});height:${r.bp}%`;}
+  if(r.layers.rbc)   {const l=r.layers.rbc;   document.getElementById('sl-r').style.cssText+=`;background:rgb(${l.rgb.R},${l.rgb.G},${l.rgb.B});height:${r.hct}%`;}
+
+  // Gauge
+  document.getElementById('g-num').textContent=r.hb+' g/dL';
+  const pct=Math.min(100,Math.max(0,(r.hb-5)/12*100));
+  document.getElementById('g-ptr').style.left=pct+'%';
+  const hbC=r.hb>=12?'#00d4a0':r.hb>=10?'#eab308':r.hb>=7?'#f97316':'#ef4444';
+  document.getElementById('g-num').style.color=hbC;
+
+  renderBloodCharts(r);
+}
+
+// ── RENDER: DILUTION SERIES ─────────────────────────────────────
+function renderDilutionResults(){
+  const results=S.dilResults;
+  if(!results.length)return;
+
+  // Use first result for the main single-strip panel
+  if(S.bloodRes) renderBloodResults(S.bloodRes);
+
+  // Build dilution response curve (RBC OD vs dilution factor)
+  const labels=results.map(r=>r.label);
+  const odValues=results.map(r=>r.layers.rbc?.od||0);
+  const hbValues=results.map(r=>r.hb);
+  const rValues =results.map(r=>r.layers.rbc?.rgb.R||0);
+
+  mk('b-layers',{type:'line',data:{labels,datasets:[
+    {label:'RBC OD',data:odValues,borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.1)',fill:true,tension:.4,pointRadius:5,borderWidth:2},
+  ]},options:{responsive:true,plugins:{legend:legOpts,title:{display:true,text:'Dilution Response Curve (RBC OD)',color:'#e2e8f0',font:{size:11}}},
+    scales:{x:{ticks:tickOpts,grid:gridOpts,title:{display:true,text:'Dilution Factor',color:'#64748b'}},
+            y:{ticks:tickOpts,grid:gridOpts,title:{display:true,text:'Optical Density',color:'#64748b'}}}}});
+
+  mk('b-hist',{type:'bar',data:{labels,datasets:[
+    {label:'Est. Hb (g/dL)',data:hbValues,backgroundColor:hbValues.map(v=>v>=12?'rgba(0,212,160,.8)':v>=10?'rgba(234,179,8,.8)':v>=7?'rgba(249,115,22,.8)':'rgba(239,68,68,.8)')},
+  ]},options:{responsive:true,plugins:{legend:legOpts,title:{display:true,text:'Estimated Hb Across Dilutions',color:'#e2e8f0',font:{size:11}}},
+    scales:{x:{ticks:tickOpts,grid:gridOpts},y:{ticks:tickOpts,grid:gridOpts,title:{display:true,text:'Hb (g/dL)',color:'#64748b'}}}}});
+
+  mk('b-sw',{type:'line',data:{labels,datasets:[
+    {label:'RBC Red Channel',data:rValues,borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.1)',fill:true,tension:.4,pointRadius:5,borderWidth:2},
+  ]},options:{responsive:true,plugins:{legend:legOpts,title:{display:true,text:'RBC Colour Intensity vs Dilution',color:'#e2e8f0',font:{size:11}}},
+    scales:{x:{ticks:tickOpts,grid:gridOpts},y:{min:0,max:255,ticks:tickOpts,grid:gridOpts,title:{display:true,text:'Red Channel (0–255)',color:'#64748b'}}}}});
+
+  // Table of all dilution results
+  const el=document.getElementById('b-results');
+  let h='<div style="overflow-x:auto"><table class="rtbl"><thead><tr><th>Dilution</th><th>Hct%</th><th>Est.Hb</th><th>RBC OD</th><th>RBC R</th><th>RBC Pallor%</th><th>Classification</th></tr></thead><tbody>';
+  results.forEach(r=>{
+    h+=`<tr><td><b>${r.label}</b></td><td>${r.hct}</td><td>${r.hb}</td><td>${r.layers.rbc?.od??'—'}</td><td>${r.layers.rbc?.rgb.R??'—'}</td><td>${r.flags?.pallorIndex??'—'}</td><td><span class="badge ${r.cls.c}">${r.cls.l}</span></td></tr>`;
+  });
+  h+='</tbody></table></div>';
+  el.innerHTML=h;
+
+  renderRadarChart(S.bloodRes);
+}
+
+// ── RENDER: TIME POINT COMPARISON ──────────────────────────────
+function renderTimeResults(){
+  const results=S.timeResults;
+  if(!results.length)return;
+
+  if(S.bloodRes) renderBloodResults(S.bloodRes);
+
+  const labels=results.map(r=>r.label);
+  const hbValues=results.map(r=>r.hb);
+  const hctValues=results.map(r=>r.hct);
+  const pallorValues=results.map(r=>r.flags?.pallorIndex||0);
+  const deValues=results.map(r=>r.layers.rbc?.de||0);
+
+  // Progression chart
+  mk('b-layers',{type:'line',data:{labels,datasets:[
+    {label:'Haemoglobin (g/dL)',data:hbValues,borderColor:'#00d4a0',backgroundColor:'rgba(0,212,160,.1)',fill:true,tension:.4,pointRadius:6,borderWidth:2},
+    {label:'Hematocrit%÷3',data:hctValues.map(v=>v/3),borderColor:'#3b82f6',borderDash:[5,3],fill:false,tension:.4,pointRadius:4,borderWidth:1.5},
+  ]},options:{responsive:true,plugins:{legend:legOpts,title:{display:true,text:'Haemoglobin Recovery Over Time',color:'#e2e8f0',font:{size:11}}},
+    scales:{x:{ticks:tickOpts,grid:gridOpts},y:{min:0,max:18,ticks:tickOpts,grid:gridOpts,title:{display:true,text:'Hb (g/dL)',color:'#64748b'}}}}});
+
+  mk('b-hist',{type:'bar',data:{labels,datasets:[
+    {label:'Pallor Index%',data:pallorValues,backgroundColor:pallorValues.map(v=>v>30?'rgba(239,68,68,.8)':'rgba(0,212,160,.8)')},
+  ]},options:{responsive:true,plugins:{legend:legOpts,title:{display:true,text:'RBC Pallor Index (lower = healthier)',color:'#e2e8f0',font:{size:11}}},
+    scales:{x:{ticks:tickOpts,grid:gridOpts},y:{min:0,max:100,ticks:tickOpts,grid:gridOpts,title:{display:true,text:'Pallor Index (%)',color:'#64748b'}}}}});
+
+  mk('b-sw',{type:'bar',data:{labels,datasets:[
+    {label:'ΔE RBC vs Healthy',data:deValues,backgroundColor:deValues.map(v=>v<15?'rgba(0,212,160,.8)':v<30?'rgba(234,179,8,.8)':'rgba(239,68,68,.8)')},
+  ]},options:{responsive:true,plugins:{legend:legOpts,title:{display:true,text:'RBC Colour Deviation from Healthy (ΔE)',color:'#e2e8f0',font:{size:11}}},
+    scales:{x:{ticks:tickOpts,grid:gridOpts},y:{ticks:tickOpts,grid:gridOpts,title:{display:true,text:'Delta E',color:'#64748b'}}}}});
+
+  // Timeline table
+  const el=document.getElementById('b-results');
+  let h='<div style="overflow-x:auto"><table class="rtbl"><thead><tr><th>Time Point</th><th>Hct%</th><th>Est.Hb</th><th>Plasma%</th><th>Pallor%</th><th>ΔE RBC</th><th>Classification</th></tr></thead><tbody>';
+  results.forEach(r=>{
+    h+=`<tr><td><b>${r.label}</b></td><td>${r.hct}</td><td>${r.hb}</td><td>${r.pp}</td><td>${r.flags?.pallorIndex??'—'}</td><td>${r.layers.rbc?.de??'—'}</td><td><span class="badge ${r.cls.c}">${r.cls.l}</span></td></tr>`;
+  });
+  h+='</tbody></table></div>';
+  el.innerHTML=h;
+
+  renderRadarChart(S.bloodRes);
+
+  // Update strip timeline visual in simulation-style widget
+  updateStripTimeline(results);
+}
+
+function updateStripTimeline(results){
+  const tline=document.getElementById('s-tline');
+  if(!tline||!results.length)return;
+  tline.innerHTML=results.map(r=>{
+    const l=r.layers.rbc;
+    const hC=r.hb>=12?'#00d4a0':r.hb>=10?'#eab308':'#ef4444';
+    const rbcBg=l?`rgb(${l.rgb.R},${l.rgb.G},${l.rgb.B})`:'#555';
+    const plBg=r.layers.plasma?`rgb(${r.layers.plasma.rgb.R},${r.layers.plasma.rgb.G},${r.layers.plasma.rgb.B})`:'#ccc';
+    return`<div class="ti">
+      <div class="tw">${r.label}</div>
+      <div class="ts" style="height:70px">
+        <div style="height:${r.pp}%;background:${plBg};font-size:6px;display:flex;align-items:center;justify-content:center;color:#333">P</div>
+        <div style="height:3%;background:#ddd"></div>
+        <div style="height:${r.hct}%;background:${rbcBg};font-size:6px;display:flex;align-items:center;justify-content:center;color:#fff">R</div>
+      </div>
+      <div class="th" style="color:${hC}">${r.hb}</div>
+      <div class="thc">${r.hct}% HCT</div>
+    </div>`;
+  }).join('');
+}
+
+// ── SHARED CHARTS ───────────────────────────────────────────────
+function renderBloodCharts(r){
+  // Layer % stacked bar vs healthy
+  mk('b-layers',{type:'bar',data:{labels:['Your Sample','Healthy Ref'],datasets:[
+    {label:'Plasma%', data:[r.pp,55],backgroundColor:'rgba(240,208,96,.8)'},
+    {label:'Buffy%',  data:[r.bp,3], backgroundColor:'rgba(232,224,200,.8)'},
+    {label:'RBC%',    data:[r.hct,42],backgroundColor:'rgba(192,40,42,.8)'},
+  ]},options:{responsive:true,plugins:{legend:legOpts},
+    scales:{x:{stacked:true,ticks:tickOpts,grid:gridOpts},y:{stacked:true,max:100,ticks:tickOpts,grid:gridOpts}}}});
+
+  // RBC RGB histogram
+  if(r.layers.rbc?.rawPx){
+    const px=r.layers.rbc.rawPx;
+    const rH=new Array(16).fill(0),gH=new Array(16).fill(0),bH=new Array(16).fill(0);
+    for(let i=0;i<px.length;i+=4){rH[px[i]>>4]++;gH[px[i+1]>>4]++;bH[px[i+2]>>4]++;}
+    mk('b-hist',{type:'line',data:{labels:Array.from({length:16},(_,i)=>i*16),datasets:[
+      {label:'R',data:rH,borderColor:'#ef4444',fill:true,backgroundColor:'rgba(239,68,68,.1)',tension:.4,pointRadius:0,borderWidth:1.5},
+      {label:'G',data:gH,borderColor:'#00d4a0',fill:true,backgroundColor:'rgba(0,212,160,.1)',tension:.4,pointRadius:0,borderWidth:1.5},
+      {label:'B',data:bH,borderColor:'#3b82f6',fill:true,backgroundColor:'rgba(59,130,246,.1)',tension:.4,pointRadius:0,borderWidth:1.5},
+    ]},options:{responsive:true,plugins:{legend:legOpts},
+      scales:{x:{ticks:tickOpts,grid:gridOpts},y:{ticks:tickOpts,grid:gridOpts}}}});
+  }
+
+  // Color swatch bar: your R vs healthy R per layer
+  const names=['Plasma','Buffy','RBC'];
+  const healthy=[[240,208,96],[232,224,200],[192,40,42]];
+  const yours=[
+    r.layers.plasma?[r.layers.plasma.rgb.R,r.layers.plasma.rgb.G,r.layers.plasma.rgb.B]:[128,128,128],
+    r.layers.buffy? [r.layers.buffy.rgb.R, r.layers.buffy.rgb.G, r.layers.buffy.rgb.B] :[128,128,128],
+    r.layers.rbc?   [r.layers.rbc.rgb.R,   r.layers.rbc.rgb.G,   r.layers.rbc.rgb.B]  :[128,128,128],
+  ];
+  mk('b-sw',{type:'bar',data:{labels:names,datasets:[
+    {label:'Your R channel',  data:yours.map(c=>c[0]),  backgroundColor:yours.map(c=>`rgb(${c[0]},${c[1]},${c[2]})`),   borderWidth:1,borderColor:'#2c3548'},
+    {label:'Healthy R ref',   data:healthy.map(c=>c[0]),backgroundColor:healthy.map(c=>`rgba(${c[0]},${c[1]},${c[2]},.5)`),borderWidth:1,borderColor:'#2c3548'},
+  ]},options:{responsive:true,plugins:{legend:legOpts},
+    scales:{x:{ticks:tickOpts,grid:gridOpts},y:{max:255,ticks:tickOpts,grid:gridOpts}}}});
+
+  renderRadarChart(r);
+}
+
+function renderRadarChart(r){
+  if(!r)return;
+  const labData=['plasma','buffy','rbc'].map(n=>r.layers[n]?.lab||{L:0,A:0,B:0});
+  mk('b-lab',{type:'radar',data:{labels:['LAB L','LAB A','LAB B'],datasets:
+    labData.map((l,i)=>({label:['Plasma','Buffy','RBC'][i],data:[l.L,l.A,l.B],
+      borderColor:['#f0d060','#ccc','#ef4444'][i],
+      backgroundColor:['rgba(240,208,96,.1)','rgba(200,200,200,.1)','rgba(239,68,68,.1)'][i],
+      pointRadius:3}))
+  },options:{responsive:true,plugins:{legend:legOpts},
+    scales:{r:{ticks:{color:'#64748b',font:{size:8}},grid:{color:'#2c3548'},
+      pointLabels:{color:'#64748b',font:{size:9}}}}}});
+}
+
+// ── SIMULATION ────────────────────────────────────────────────
+const PROF={
+  child:   {nHb:12.5,rda:9,thr:11.0,ab:0.12},
+  'teen-m':{nHb:14.5,rda:11,thr:13.0,ab:0.10},
+  'teen-f':{nHb:13.0,rda:15,thr:12.0,ab:0.12},
+  'adult-m':{nHb:15.5,rda:8,thr:13.0,ab:0.08},
+  'adult-f':{nHb:13.5,rda:18,thr:12.0,ab:0.10},
+  pregnant:{nHb:12.0,rda:27,thr:11.0,ab:0.20},
+  'post-m':{nHb:13.5,rda:8,thr:12.0,ab:0.08},
+  elder:   {nHb:13.0,rda:8,thr:12.0,ab:0.09},
+};
+const FE_PER_HB=3.4; // mg iron per 1 g/dL Hb rise
+const DAILY_LOSS=0.9; // mg/day natural iron loss
+
+function runSim(){
+  const grp=document.getElementById('s-age').value;
+  const p=PROF[grp];
+  const hb0=parseFloat(document.getElementById('s-hb').value);
+  const fe100=parseFloat(document.getElementById('s-fe').value);
+  const sv=parseFloat(document.getElementById('s-sv').value);
+  const wks=parseInt(document.getElementById('s-wk').value);
+  const vc=parseFloat(document.getElementById('s-vc').value);
+  const inh=parseFloat(document.getElementById('s-inh').value);
+  const feDay=(fe100/100)*sv; // mg iron consumed per day
+  let hb=hb0, totFe=0;
+  const rows=[];
+  for(let d=0;d<=wks*7;d++){
+    if(d%7===0){
+      const deficit=Math.max(1,(p.nHb-hb)/p.nHb*3);
+      const ar=Math.min(0.35,p.ab*deficit*vc*inh);
+      const feAbs=feDay*ar;
+      const hbGain=(feAbs-DAILY_LOSS)/FE_PER_HB/7;
+      hb=Math.min(p.nHb,Math.max(1,hb+hbGain*7));
+      hb=+hb.toFixed(2);
+      totFe+=feAbs*7;
+      const w=Math.round(d/7);
+      const hct=+(hb*3).toFixed(1);
+      const cls=classify(hb,grp);
+      rows.push({w,hb,hct,feAbs:+(feAbs*7).toFixed(2),ar:+(ar*100).toFixed(1),cls});
+    }
+  }
+  const rec=rows.find(r=>r.hb>=p.thr);
+  S.simRes={rows,p,grp,hb0,totFe:+totFe.toFixed(1),rec:rec?.w||null,feDay};
+  renderSim();
+  toast('✓ Simulation complete');
+}
+
+function renderSim(){
+  const {rows,p,hb0,totFe,rec}=S.simRes;
+  const fHb=rows[rows.length-1]?.hb||hb0;
+  document.getElementById('s-stats').style.display='flex';
+  document.getElementById('ss-s').innerHTML=hb0+'<span class="su">g/dL</span>';
+  document.getElementById('ss-f').innerHTML=fHb+'<span class="su">g/dL</span>';
+  document.getElementById('ss-r').innerHTML=(rec??'—')+'<span class="su">wks</span>';
+  document.getElementById('ss-fe').innerHTML=totFe+'<span class="su">mg</span>';
+  document.getElementById('ss-ar').innerHTML=rows[0]?.ar+'<span class="su">%</span>';
+  const ok=fHb>=p.thr;
+  document.getElementById('s-summary').innerHTML=`
+    <div style="font-size:14px;font-weight:700;color:${ok?'#00d4a0':'#f97316'};margin-bottom:6px">
+      ${ok?'✅ Recovery Achieved':'⚠ Partial Recovery — extend duration or increase serving'}
+    </div>
+    <div style="font-size:12px;color:var(--muted)">
+      Hb rises from <b style="color:#e2e8f0">${hb0}</b> → <b style="color:${ok?'#00d4a0':'#f97316'}">${fHb} g/dL</b>
+      ${rec?`• Normal reached at <b style="color:#e2e8f0">Week ${rec}</b>`:''}
+      • Target: <b style="color:#e2e8f0">${p.thr} g/dL</b>
+    </div>`;
+
+  // Hb chart
+  mk('s-hb',{type:'line',data:{labels:rows.map(r=>'W'+r.w),datasets:[
+    {label:'Haemoglobin (g/dL)',data:rows.map(r=>r.hb),borderColor:'#00d4a0',
+      backgroundColor:'rgba(0,212,160,.1)',fill:true,tension:.4,pointRadius:2,borderWidth:2},
+    {label:'Hematocrit%÷3',data:rows.map(r=>r.hct/3),borderColor:'#3b82f6',
+      borderDash:[5,3],fill:false,tension:.4,pointRadius:0,borderWidth:1.5},
+    {label:'Normal threshold',data:rows.map(()=>p.thr),borderColor:'#eab308',
+      borderDash:[8,4],fill:false,pointRadius:0,borderWidth:1},
+  ]},options:{responsive:true,plugins:{legend:legOpts},
+    scales:{
+      x:{ticks:{...tickOpts,maxTicksLimit:14},grid:gridOpts},
+      y:{min:0,max:Math.max(18,p.nHb+2),ticks:tickOpts,grid:gridOpts,
+        title:{display:true,text:'Hb (g/dL)',color:'#64748b'}}
+    }}});
+
+  // week table
+  document.getElementById('s-tbody').innerHTML=rows.map(r=>`
+    <tr>
+      <td>${r.w}</td><td><b>${r.hb}</b></td><td>${r.hct}</td>
+      <td>${r.feAbs}</td><td>${r.ar}%</td>
+      <td><span class="badge ${r.cls.c}">${r.cls.l}</span></td>
+    </tr>`).join('');
+
+  // strip timeline
+  const step=Math.max(1,Math.floor(rows.length/8));
+  const kw=rows.filter((_,i)=>i%step===0||i===rows.length-1);
+  document.getElementById('s-tline').innerHTML=kw.map(r=>{
+    const hct=r.hct;
+    const pp=Math.max(5,100-hct-3);
+    const rC=`hsl(0,${Math.min(80,30+hct)}%,${Math.max(20,50-hct/2)}%)`;
+    const pC=`hsl(50,${Math.min(60,10+hct/3)}%,${Math.min(85,60+hct/4)}%)`;
+    const hC=r.hb>=p.thr?'#00d4a0':r.hb>=10?'#eab308':'#ef4444';
+    return`<div class="ti">
+      <div class="tw">Week ${r.w}</div>
+      <div class="ts" style="height:70px">
+        <div style="height:${pp}%;background:${pC};font-size:6px;display:flex;align-items:center;justify-content:center;color:#333">P</div>
+        <div style="height:3%;background:#ddd"></div>
+        <div style="height:${hct}%;background:${rC};font-size:6px;display:flex;align-items:center;justify-content:center;color:#fff">R</div>
+      </div>
+      <div class="th" style="color:${hC}">${r.hb}</div>
+      <div class="thc">${hct}%</div>
+    </div>`;
+  }).join('');
+}
+
+function loadFromBlood(){
+  if(!S.bloodRes){toast('Run blood analysis first (Tab 2)');return;}
+  document.getElementById('s-hb').value=S.bloodRes.hb;
+  toast('✓ Hb loaded: '+S.bloodRes.hb+' g/dL');
+}
+function loadFromColor(){
+  const r=S.cRegions.find(x=>x.conc!=null);
+  if(!r||!S.calCurve){toast('Run colorimetry with calibration curve first');return;}
+  // convert from mg/L in extract to mg/100g of leaf (0.5g in 10mL)
+  const per100g=+(r.conc*(10/0.5)/10).toFixed(2);
+  document.getElementById('s-fe').value=per100g;
+  toast('✓ Iron loaded: '+per100g+' mg/100g');
+}
+
+// ── EXPORTS ───────────────────────────────────────────────────
+function doExport(fmt,tab){
+  if(fmt==='csv') exportCSV(tab);
+  else if(fmt==='json') exportJSON(tab);
+  else if(fmt==='pdf') exportPDF(tab);
+  else if(fmt==='png') exportPNG(tab);
+}
+
+function dl(content,name,type){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([content],{type}));
+  a.download=name; a.click();
+}
+
+function exportCSV(tab){
+  let csv='',name='';
+  if(tab==='c'){
+    if(!S.cRegions.some(r=>r.rgb)){toast('No colorimetry data');return;}
+    csv='Region,Label,R,G,B,Hue,Sat,Val,LAB_L,LAB_A,LAB_B,OD,DeltaE,Conc_mgL\n';
+    S.cRegions.filter(r=>r.rgb).forEach(r=>{
+      csv+=`R${r.id},${r.label},${r.rgb.R},${r.rgb.G},${r.rgb.B},${r.hsv.H},${r.hsv.S},${r.hsv.V},${r.lab.L},${r.lab.A},${r.lab.B},${r.od},${r.dE},${r.conc??''}\n`;
+    });
+    name='colorimetry_results.csv';
+  } else if(tab==='b'){
+    if(!S.bloodRes){toast('No blood data');return;}
+    const r=S.bloodRes;
+    csv=`Patient,${r.pid}\nDate,${r.date}\nHematocrit%,${r.hct}\nHb_gdL,${r.hb}\nPlasma%,${r.pp}\nBuffy%,${r.bp}\nClassification,${r.cls.l}\n\nLayer,R,G,B,Hue,Sat,LAB_L,LAB_A,OD\n`;
+    ['plasma','buffy','rbc'].forEach(n=>{const l=r.layers[n];if(!l)return;csv+=`${n},${l.rgb.R},${l.rgb.G},${l.rgb.B},${l.hsv.H},${l.hsv.S},${l.lab.L},${l.lab.A},${l.od}\n`;});
+    name='blood_analysis.csv';
+  } else {
+    if(!S.simRes){toast('Run simulation first');return;}
+    csv='Week,Hb_gdL,Hct_pct,Fe_Abs_mg,Abs_Rate_pct,Status\n';
+    S.simRes.rows.forEach(r=>{csv+=`${r.w},${r.hb},${r.hct},${r.feAbs},${r.ar},${r.cls.l}\n`;});
+    name='simulation_results.csv';
+  }
+  dl(csv,name,'text/csv');
+  toast('✓ CSV exported');
+}
+
+function exportJSON(tab){
+  let data={},name='';
+  const dt=new Date().toISOString().split('T')[0];
+  if(tab==='c'){data={type:'colorimetry',date:dt,analyte:document.getElementById('c-analyte').value,calibCurve:S.calCurve,regions:S.cRegions.filter(r=>r.rgb).map(r=>({...r,rawPx:undefined}))};name='colorimetry.json';}
+  else if(tab==='b'){data={type:'blood',date:dt,...S.bloodRes,layers:Object.fromEntries(Object.entries(S.bloodRes?.layers||{}).map(([k,v])=>[k,{...v,rawPx:undefined}]))};name='blood.json';}
+  else{data={type:'simulation',date:dt,...S.simRes};name='simulation.json';}
+  dl(JSON.stringify(data,null,2),name,'application/json');
+  toast('✓ JSON exported');
+}
+
+function exportPNG(tab){
+  const ids={c:['c-hist','c-hsv','c-curve','c-comp'],b:['b-layers','b-hist','b-sw','b-lab'],s:['s-hb']};
+  (ids[tab]||[]).forEach((id,i)=>{
+    setTimeout(()=>{
+      const cv=document.getElementById(id); if(!cv)return;
+      const a=document.createElement('a');
+      a.download=`${tab}_chart_${i+1}.png`; a.href=cv.toDataURL('image/png'); a.click();
+    },i*400);
+  });
+  toast('✓ PNG charts downloading');
+}
+
+function exportPDF(tab){
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({unit:'mm',format:'a4'});
+  const W=210;
+  // Header
+  doc.setFillColor(15,17,23); doc.rect(0,0,W,297,'F');
+  doc.setFillColor(24,30,42); doc.rect(0,0,W,16,'F');
+  doc.setTextColor(0,212,160); doc.setFontSize(11); doc.setFont('helvetica','bold');
+  doc.text('μFluidic Lab Analyser — Export Report',10,10);
+  doc.setTextColor(100,116,139); doc.setFontSize(8); doc.setFont('helvetica','normal');
+  doc.text(new Date().toLocaleString(),W-10,10,{align:'right'});
+  let y=24;
+  const T=(t,c=[0,212,160])=>{doc.setTextColor(...c);doc.setFontSize(12);doc.setFont('helvetica','bold');doc.text(t,10,y);y+=7;};
+  const P=(t,ind=10)=>{doc.setTextColor(226,232,240);doc.setFontSize(9);doc.setFont('helvetica','normal');const lines=doc.splitTextToSize(t,W-20);doc.text(lines,ind,y);y+=lines.length*5+1;};
+  const L=()=>{doc.setDrawColor(44,53,72);doc.line(10,y,W-10,y);y+=4;};
+
+  if(tab==='c'){
+    T('Colorimetry Analysis Report');L();
+    P(`Analyte: ${document.getElementById('c-analyte').value}`);
+    P(`Sample: ${document.getElementById('c-name').value}`);
+    P(`Regions: ${S.cRegions.filter(r=>r.rgb).length}`);
+    if(S.calCurve)P(`Calibration: y=${S.calCurve.slope.toFixed(5)}x+${S.calCurve.intercept.toFixed(5)}  R²=${S.calCurve.r2.toFixed(4)}`);
+    y+=3;T('Region Results',[226,232,240]);
+    S.cRegions.filter(r=>r.rgb).forEach(r=>{
+      doc.setFillColor(28,36,48);doc.roundedRect(10,y,W-20,16,2,2,'F');
+      doc.setFillColor(r.rgb.R,r.rgb.G,r.rgb.B);doc.rect(12,y+3,9,9,'F');
+      doc.setTextColor(226,232,240);doc.setFontSize(8);doc.setFont('helvetica','bold');
+      doc.text(r.label,25,y+8);
+      doc.setFont('helvetica','normal');doc.setTextColor(100,116,139);doc.setFontSize(7);
+      doc.text(`RGB(${r.rgb.R},${r.rgb.G},${r.rgb.B}) H:${r.hsv.H}° S:${r.hsv.S}% | LAB A:${r.lab.A} | OD:${r.od} | ΔE:${r.dE}${r.conc!=null?' | '+r.conc+' mg/L':''}`,25,y+13);
+      y+=19;
+    });
+  } else if(tab==='b'){
+    T('Blood Strip Analysis Report');L();
+    if(S.bloodRes){
+      const r=S.bloodRes;
+      P(`Patient: ${r.pid||'Unknown'} | Date: ${r.date}`); y+=2;
+      const cc={bg:[0,212,160],by:[234,179,8],bo:[249,115,22],br:[239,68,68]};
+      const cl=cc[r.cls.c]||[100,100,100];
+      doc.setFillColor(...cl,0.3); doc.roundedRect(10,y,W-20,18,3,3,'F');
+      doc.setTextColor(...cl);doc.setFontSize(13);doc.setFont('helvetica','bold');
+      doc.text(r.cls.l,W/2,y+8,{align:'center'});
+      doc.setFontSize(9);doc.text(`Hb: ${r.hb} g/dL  |  Hematocrit: ${r.hct}%`,W/2,y+15,{align:'center'});
+      y+=22;L();
+      ['plasma','buffy','rbc'].forEach(n=>{const l=r.layers[n];if(!l)return;P(`${n.toUpperCase()}: ${l.hpct}% height | RGB(${l.rgb.R},${l.rgb.G},${l.rgb.B}) | Hue ${l.hsv.H}° | LAB L:${l.lab.L} A:${l.lab.A} | OD:${l.od}`);});
+    }
+  } else {
+    T('Iron Supplementation Simulation Report');L();
+    if(S.simRes){
+      const r=S.simRes;
+      P(`Group: ${document.getElementById('s-age').options[document.getElementById('s-age').selectedIndex].text}`);
+      P(`Start Hb: ${r.hb0} g/dL | Target: ${r.p.thr} g/dL | Final Hb: ${r.rows[r.rows.length-1]?.hb} g/dL`);
+      P(`Iron in food: ${document.getElementById('s-fe').value} mg/100g | Serving: ${document.getElementById('s-sv').value}g/day`);
+      P(`Total Fe absorbed: ${r.totFe} mg | Recovery at: Week ${r.rec||'beyond window'}`);
+      y+=3;L();T('Weekly Summary',[226,232,240]);
+      r.rows.forEach(row=>{P(`Wk ${String(row.w).padStart(2)} | Hb:${row.hb} g/dL | Hct:${row.hct}% | Fe:${row.feAbs}mg/wk | Abs:${row.ar}% | ${row.cls.l}`,12);});
+    }
+  }
+  y+=8;
+  doc.setFillColor(24,30,42);doc.rect(0,285,W,12,'F');
+  doc.setTextColor(71,85,105);doc.setFontSize(7);
+  doc.text('Research use only — not a clinical diagnostic tool | μFluidic Lab Analyser',W/2,292,{align:'center'});
+  doc.save(`${tab}_report.pdf`);
+  toast('✓ PDF report saved');
+}
+
+// ── TOAST ─────────────────────────────────────────────────────
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('on');
+  clearTimeout(window._tto);
+  window._tto=setTimeout(()=>t.classList.remove('on'),2600);
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+buildCZones();
+buildBZones();
+buildCalRows();
+</script>
+</body>
+</html>
