@@ -193,6 +193,14 @@ header{position:sticky;top:0;z-index:100;background:rgba(10,14,23,.85);backdrop-
 .strip-tab .tab-badge{font-size:8px;background:var(--s3);padding:1px 4px;border-radius:4px;margin-left:4px}
 .tp-select{background:var(--s3);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:4px;font-size:10px;outline:none;font-family:var(--font)}
 .tp-select:focus{border-color:var(--accent)}
+.cal-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px;margin-top:8px}
+.cs-item{background:var(--s2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px;text-align:center}
+.cs-item .cs-val{font-size:14px;font-weight:800;color:var(--accent)}
+.cs-item .cs-lbl{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-top:2px}
+.cal-method-select{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.cms{background:var(--s2);border:1px solid var(--border);color:var(--muted);padding:5px 10px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:600;transition:all .2s}
+.cms:hover{border-color:var(--accent);color:var(--text)}
+.cms.on{background:rgba(0,229,160,.12);border-color:var(--accent);color:var(--accent)}
 @media(max-width:480px){
   .card{padding:12px}.row{padding:10px;gap:10px}
   .stat-row{grid-template-columns:1fr 1fr}.rtbl{font-size:9px}
@@ -294,17 +302,43 @@ header{position:sticky;top:0;z-index:100;background:rgba(10,14,23,.85);backdrop-
         <div class="cg"><h4>Standard Curve</h4><canvas id="c-curve"></canvas></div>
       </div>
     </div>
+    <!-- ═══════════════════ ENHANCED CALIBRATION ═══════════════════ -->
     <div class="card">
-      <div class="ct"><span class="dot"></span>Calibration Curve</div>
-      <p style="font-size:11px;color:var(--muted);margin-bottom:10px">Enter concentrations (mg/L) and OD values.</p>
-      <div style="display:flex;gap:20px;font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);padding:0 0 4px 28px"><span style="flex:1">Conc (mg/L)</span><span style="flex:1">OD</span></div>
-      <div id="cal-rows"></div>
-      <div class="tbar" style="margin-top:8px">
-        <button class="btn primary" onclick="buildCalibrationCurve()">📈 Build Curve</button>
-        <button class="btn" onclick="addCalRow()">+ Add Row</button>
-        <button class="btn blue" onclick="loadCalFromRegions()">📥 Load from Standards</button>
+      <div class="ct"><span class="dot"></span>Beer-Lambert Calibration</div>
+      <div class="info-box"><strong>Beer-Lambert Law: A = εbc</strong> — Absorbance is proportional to concentration. Build a standard curve using known standards to quantify unknowns.</div>
+      
+      <div class="fg" style="margin-bottom:8px">
+        <label>Stock Concentration (mg/L)</label>
+        <input type="number" id="cal-stock" value="100" min="1" max="10000" step="0.1">
       </div>
-      <div id="cal-eq"></div>
+      
+      <div class="cal-method-select">
+        <div class="cms on" data-calmethod="absorbance" onclick="setCalMethod('absorbance',this)">📊 Absorbance</div>
+        <div class="cms" data-calmethod="rgb" onclick="setCalMethod('rgb',this)">🔴 Mean RGB</div>
+        <div class="cms" data-calmethod="hsv" onclick="setCalMethod('hsv',this)">🎨 HSV</div>
+        <div class="cms" data-calmethod="lab" onclick="setCalMethod('lab',this)">🧪 LAB</div>
+        <div class="cms" data-calmethod="od" onclick="setCalMethod('od',this)">⚗️ OD</div>
+      </div>
+      
+      <p style="font-size:10px;color:var(--muted);margin-bottom:6px">Enter concentration and measured value for each standard:</p>
+      <div style="display:flex;gap:20px;font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);padding:0 0 4px 28px">
+        <span style="flex:1">Standard</span>
+        <span style="flex:1">Conc (mg/L)</span>
+        <span style="flex:1" id="cal-value-label">Absorbance</span>
+      </div>
+      <div id="cal-rows-enhanced"></div>
+      <div class="tbar" style="margin-top:8px">
+        <button class="btn primary" onclick="buildEnhancedCalibration()">📈 Build Calibration Curve</button>
+        <button class="btn" onclick="addEnhancedCalRow()">+ Add Row</button>
+        <button class="btn blue" onclick="resetDefaultCalibration()">↺ Restore Defaults</button>
+        <button class="btn blue" onclick="loadCalFromImageRegions()">📥 Load from Image Regions</button>
+      </div>
+      <div id="cal-eq-enhanced"></div>
+      <div id="cal-stats-enhanced" class="cal-stats"></div>
+    </div>
+    <div class="card">
+      <div class="ct"><span class="dot"></span>Beer-Lambert Curve</div>
+      <canvas id="c-beer-lambert" style="max-height:280px"></canvas>
     </div>
     <div class="card">
       <div class="ct"><span class="dot"></span>Export</div>
