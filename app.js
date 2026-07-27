@@ -288,7 +288,7 @@ function renderStripTabs(){
     return '<div class="strip-tab '+(i===S.bActiveStrip?'on':'')+'" onclick="switchStrip('+i+')">'+
       (roleIcons[s.role]||'🩸')+' '+s.name+
       '<span class="tab-badge">'+s.regions.length+' layers</span>'+
-      (S.bMode==='time'?'<select class="tp-select" onclick="event.stopPropagation()" onchange="setStripTimePoint('+i+',this.value)"><option value="Week 0"'+(s.timePoint==='Week 0'?'selected':'')+'>Wk 0</option><option value="Week 4"'+(s.timePoint==='Week 4'?'selected':'')+'>Wk 4</option><option value="Week 8"'+(s.timePoint==='Week 8'?'selected':'')+'>Wk 8</option><option value="Week 12"'+(s.timePoint==='Week 12'?'selected':'')+'>Wk 12</option></select>':'')+
+      (S.bMode==='time'?'<select class="tp-select" onclick="event.stopPropagation()" onchange="setStripTimePoint('+i+',this.value)"><option value="Week 0"'+(s.timePoint==='Week 0'?'selected':'')+'>Wk 0</option><option value="Week 1"'+(s.timePoint==='Week 1'?'selected':'')+'>Wk 1</option><option value="Week 2"'+(s.timePoint==='Week 2'?'selected':'')+'>Wk 2</option><option value="Week 3"'+(s.timePoint==='Week 3'?'selected':'')+'>Wk 3</option><option value="Week 4"'+(s.timePoint==='Week 4'?'selected':'')+'>Wk 4</option><option value="Week 5"'+(s.timePoint==='Week 5'?'selected':'')+'>Wk 5</option><option value="Week 6"'+(s.timePoint==='Week 6'?'selected':'')+'>Wk 6</option><option value="Week 7"'+(s.timePoint==='Week 7'?'selected':'')+'>Wk 7</option><option value="Week 8"'+(s.timePoint==='Week 8'?'selected':'')+'>Wk 8</option></select>':'')+
       (S.bMode==='ref'?'<select class="tp-select" onclick="event.stopPropagation()" onchange="setStripRole('+i+',this.value)"><option value="sample"'+(s.role==='sample'?'selected':'')+'>Sample</option><option value="reference"'+(s.role==='reference'?'selected':'')+'>Reference</option></select>':'')+
       (S.bMode==='dil'?'<select class="tp-select" onclick="event.stopPropagation()" onchange="setStripDilution('+i+',this.value)"><option value="1/1"'+(s.dilution==='1/1'||!s.dilution?'selected':'')+'>1/1</option><option value="1/2"'+(s.dilution==='1/2'?'selected':'')+'>1/2</option><option value="1/4"'+(s.dilution==='1/4'?'selected':'')+'>1/4</option><option value="1/8"'+(s.dilution==='1/8'?'selected':'')+'>1/8</option><option value="1/16"'+(s.dilution==='1/16'?'selected':'')+'>1/16</option></select>':'')+
       '<button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:12px;padding:0 2px" onclick="event.stopPropagation();removeStrip('+i+')">✕</button></div>';
@@ -425,7 +425,87 @@ function renderBloodResults(r){
   var hbC=r.hb>=12?'#00e5a0':r.hb>=10?'#eab308':r.hb>=7?'#f97316':'#ef4444';
   document.getElementById('b-g-num').style.color=hbC;
 }
-function renderRefComparison(samples,refs){var el=document.getElementById('b-results');var avgRef={rbc:{rgb:{R:0,G:0,B:0},hsv:{H:0,S:0,V:0},lab:{L:0,A:0,B:0},od:0},plasma:{rgb:{R:0,G:0,B:0},hsv:{H:0,S:0,V:0},lab:{L:0,A:0,B:0},od:0},buffy:{rgb:{R:0,G:0,B:0},hsv:{H:0,S:0,V:0},lab:{L:0,A:0,B:0},od:0}};var layerNames=['rbc','plasma','buffy'];layerNames.forEach(function(n){refs.forEach(function(r){var l=r.layers[n];if(!l)return;avgRef[n].rgb.R+=l.rgb.R;avgRef[n].rgb.G+=l.rgb.G;avgRef[n].rgb.B+=l.rgb.B;avgRef[n].hsv.H+=l.hsv.H;avgRef[n].hsv.S+=l.hsv.S;avgRef[n].hsv.V+=l.hsv.V;avgRef[n].lab.L+=l.lab.L;avgRef[n].lab.A+=l.lab.A;avgRef[n].lab.B+=l.lab.B;avgRef[n].od+=l.od;});var c=refs.filter(function(r){return r.layers[n];}).length||1;avgRef[n].rgb.R=Math.round(avgRef[n].rgb.R/c);avgRef[n].rgb.G=Math.round(avgRef[n].rgb.G/c);avgRef[n].rgb.B=Math.round(avgRef[n].rgb.B/c);avgRef[n].hsv.H=+(avgRef[n].hsv.H/c).toFixed(1);avgRef[n].hsv.S=+(avgRef[n].hsv.S/c).toFixed(1);avgRef[n].hsv.V=+(avgRef[n].hsv.V/c).toFixed(1);avgRef[n].lab.L=+(avgRef[n].lab.L/c).toFixed(1);avgRef[n].lab.A=+(avgRef[n].lab.A/c).toFixed(1);avgRef[n].lab.B=+(avgRef[n].lab.B/c).toFixed(1);avgRef[n].od=+(avgRef[n].od/c).toFixed(4);});var h='<div class="analysis-summary"><div class="as-item"><div class="as-val">'+samples.length+'</div><div class="as-lbl">Samples</div></div><div class="as-item"><div class="as-val">'+refs.length+'</div><div class="as-lbl">References</div></div></div>';h+='<div style="overflow-x:auto"><table class="rtbl"><thead><tr><th>Layer</th><th>Metric</th><th>Sample</th><th>Reference</th><th>Δ</th><th>Status</th></tr></thead><tbody>';samples.forEach(function(s,si){layerNames.forEach(function(n){var l=s.layers[n];if(!l)return;var r=avgRef[n];var dRGB=Math.round(Math.abs(l.rgb.R-r.rgb.R)+Math.abs(l.rgb.G-r.rgb.G)+Math.abs(l.rgb.B-r.rgb.B));var dLab=dE(l.lab,{L:r.lab.L,A:r.lab.A,B:r.lab.B});var status=dLab<10?'<span class="badge bg">Normal</span>':dLab<25?'<span class="badge by">Slight diff</span>':'<span class="badge br">Different</span>';h+='<tr><td><b>'+n.toUpperCase()+'</b></td><td>RGB</td><td>'+l.rgb.R+','+l.rgb.G+','+l.rgb.B+'</td><td>'+r.rgb.R+','+r.rgb.G+','+r.rgb.B+'</td><td>'+dRGB+'</td><td>'+status+'</td></tr>';h+='<tr><td></td><td>OD</td><td>'+l.od+'</td><td>'+r.od+'</td><td>'+(l.od-r.od).toFixed(4)+'</td><td></td></tr>';h+='<tr><td></td><td>ΔE</td><td colspan="2">vs Reference</td><td>'+dLab.toFixed(2)+'</td><td>'+status+'</td></tr>';});});h+='</tbody></table></div>';el.innerHTML=h;if(samples[0]){S.bResults=samples[0];renderBloodResults(samples[0]);}}
+function renderRefComparison(samples,refs){
+  var el=document.getElementById('b-results');
+  // Compute average reference from user-uploaded reference strips (not HEALTHY)
+  var avgRef={rbc:{rgb:{R:0,G:0,B:0},hsv:{H:0,S:0,V:0},lab:{L:0,A:0,B:0},od:0},plasma:{rgb:{R:0,G:0,B:0},hsv:{H:0,S:0,V:0},lab:{L:0,A:0,B:0},od:0},buffy:{rgb:{R:0,G:0,B:0},hsv:{H:0,S:0,V:0},lab:{L:0,A:0,B:0},od:0}};
+  var layerNames=['rbc','plasma','buffy'];
+  layerNames.forEach(function(n){
+    refs.forEach(function(r){
+      var l=r.layers[n];if(!l)return;
+      avgRef[n].rgb.R+=l.rgb.R;avgRef[n].rgb.G+=l.rgb.G;avgRef[n].rgb.B+=l.rgb.B;
+      avgRef[n].hsv.H+=l.hsv.H;avgRef[n].hsv.S+=l.hsv.S;avgRef[n].hsv.V+=l.hsv.V;
+      avgRef[n].lab.L+=l.lab.L;avgRef[n].lab.A+=l.lab.A;avgRef[n].lab.B+=l.lab.B;
+      avgRef[n].od+=l.od;
+    });
+    var c=refs.filter(function(r){return r.layers[n];}).length||1;
+    avgRef[n].rgb.R=Math.round(avgRef[n].rgb.R/c);avgRef[n].rgb.G=Math.round(avgRef[n].rgb.G/c);avgRef[n].rgb.B=Math.round(avgRef[n].rgb.B/c);
+    avgRef[n].hsv.H=+(avgRef[n].hsv.H/c).toFixed(1);avgRef[n].hsv.S=+(avgRef[n].hsv.S/c).toFixed(1);avgRef[n].hsv.V=+(avgRef[n].hsv.V/c).toFixed(1);
+    avgRef[n].lab.L=+(avgRef[n].lab.L/c).toFixed(1);avgRef[n].lab.A=+(avgRef[n].lab.A/c).toFixed(1);avgRef[n].lab.B=+(avgRef[n].lab.B/c).toFixed(1);
+    avgRef[n].od=+(avgRef[n].od/c).toFixed(4);
+  });
+  
+  // Build results table
+  var h='<div class="analysis-summary"><div class="as-item"><div class="as-val">'+samples.length+'</div><div class="as-lbl">Samples</div></div><div class="as-item"><div class="as-val">'+refs.length+'</div><div class="as-lbl">References</div></div></div>';
+  h+='<div style="overflow-x:auto"><table class="rtbl"><thead><tr><th>Sample</th><th>Layer</th><th>Metric</th><th>Sample</th><th>Reference</th><th>Δ</th><th>Status</th></tr></thead><tbody>';
+  samples.forEach(function(s,si){
+    layerNames.forEach(function(n){
+      var l=s.layers[n];if(!l)return;
+      var r=avgRef[n];
+      var dRGB=Math.round(Math.abs(l.rgb.R-r.rgb.R)+Math.abs(l.rgb.G-r.rgb.G)+Math.abs(l.rgb.B-r.rgb.B));
+      var dLab=dE(l.lab,{L:r.lab.L,A:r.lab.A,B:r.lab.B});
+      var status=dLab<10?'<span class="badge bg">Normal</span>':dLab<25?'<span class="badge by">Slight diff</span>':'<span class="badge br">Different</span>';
+      h+='<tr><td><b>'+s.stripName+'</b></td><td><b>'+n.toUpperCase()+'</b></td><td>RGB</td><td>'+l.rgb.R+','+l.rgb.G+','+l.rgb.B+'</td><td>'+r.rgb.R+','+r.rgb.G+','+r.rgb.B+'</td><td>'+dRGB+'</td><td>'+status+'</td></tr>';
+      h+='<tr><td></td><td></td><td>OD</td><td>'+l.od+'</td><td>'+r.od+'</td><td>'+(l.od-r.od).toFixed(4)+'</td><td></td></tr>';
+      h+='<tr><td></td><td></td><td>ΔE</td><td colspan="2">vs Reference</td><td>'+dLab.toFixed(2)+'</td><td>'+status+'</td></tr>';
+    });
+  });
+  h+='</tbody></table></div>';
+  el.innerHTML=h;
+  
+  // Draw comparison charts (vs user reference, not HEALTHY)
+  var sampleLabels=samples.map(function(s){return s.stripName||'Sample';});
+  var refLabel=refs.length===1?(refs[0].stripName||'Reference'):'Avg Reference';
+  
+  // Layer % comparison chart
+  var layerLabels=['RBC','Plasma','Buffy'];
+  var samplePcts=layerNames.map(function(n){
+    var avg=0,c=0;
+    samples.forEach(function(s){if(s.layers[n]){avg+=n==='rbc'?s.rp:n==='plasma'?s.pp:s.bp;c++;}});
+    return c?Math.round(avg/c):0;
+  });
+  var refPcts=layerNames.map(function(n){
+    var avg=0,c=0;
+    refs.forEach(function(s){if(s.layers[n]){avg+=n==='rbc'?s.rp:n==='plasma'?s.pp:s.bp;c++;}});
+    return c?Math.round(avg/c):0;
+  });
+  mk('b-layers',{type:'bar',data:{labels:layerLabels,datasets:[{label:'Sample Avg',data:samplePcts,backgroundColor:'rgba(0,229,160,.7)'},{label:refLabel,data:refPcts,backgroundColor:'rgba(59,130,246,.7)'}]},options:{responsive:true,plugins:{legend:lO,title:{display:true,text:'Layer %: Sample vs Reference',color:'#e2e8f0',font:{size:10}}},scales:{x:{ticks:tO,grid:gO},y:{max:100,ticks:tO,grid:gO}}}});
+  
+  // RGB comparison chart
+  var rgbLabels=['R','G','B'];
+  var sampleRGB=[0,0,0],refRGB=[0,0,0];
+  layerNames.forEach(function(n){
+    samples.forEach(function(s){if(s.layers[n]){sampleRGB[0]+=s.layers[n].rgb.R;sampleRGB[1]+=s.layers[n].rgb.G;sampleRGB[2]+=s.layers[n].rgb.B;}});
+    refs.forEach(function(s){if(s.layers[n]){refRGB[0]+=s.layers[n].rgb.R;refRGB[1]+=s.layers[n].rgb.G;refRGB[2]+=s.layers[n].rgb.B;}});
+  });
+  var sc=samples.length*3||1,rc=refs.length*3||1;
+  sampleRGB=[Math.round(sampleRGB[0]/sc),Math.round(sampleRGB[1]/sc),Math.round(sampleRGB[2]/sc)];
+  refRGB=[Math.round(refRGB[0]/rc),Math.round(refRGB[1]/rc),Math.round(refRGB[2]/rc)];
+  mk('b-rgb',{type:'bar',data:{labels:rgbLabels,datasets:[{label:'Sample Avg',data:sampleRGB,backgroundColor:'rgba(0,229,160,.7)'},{label:refLabel,data:refRGB,backgroundColor:'rgba(59,130,246,.7)'}]},options:{responsive:true,plugins:{legend:lO,title:{display:true,text:'RGB: Sample vs Reference',color:'#e2e8f0',font:{size:10}}},scales:{x:{ticks:tO,grid:gO},y:{max:255,ticks:tO,grid:gO}}}});
+  
+  // ΔE comparison per layer
+  var dEdata=layerNames.map(function(n){
+    var avg=0,c=0;
+    samples.forEach(function(s){
+      if(s.layers[n]&&avgRef[n]){avg+=dE(s.layers[n].lab,{L:avgRef[n].lab.L,A:avgRef[n].lab.A,B:avgRef[n].lab.B});c++;}
+    });
+    return c?+(avg/c).toFixed(1):0;
+  });
+  mk('b-hsv',{type:'bar',data:{labels:layerLabels.map(function(l){return l.toUpperCase();}),datasets:[{label:'ΔE vs Reference',data:dEdata,backgroundColor:['rgba(239,68,68,.7)','rgba(240,208,96,.7)','rgba(200,200,200,.7)']}]},options:{responsive:true,plugins:{legend:lO,title:{display:true,text:'ΔE per Layer vs Reference',color:'#e2e8f0',font:{size:10}}},scales:{x:{ticks:tO,grid:gO},y:{ticks:tO,grid:gO}}}});
+  
+  // Store first sample for strip viz
+  if(samples[0]){S.bResults=samples[0];renderBloodResults(samples[0]);}
+}
 function renderDilutionResults(results){var el=document.getElementById('b-results');var sorted=[].concat(results).sort(function(a,b){return parseFloat(b.dilution?b.dilution.split('/')[1]:1)-parseFloat(a.dilution?a.dilution.split('/')[1]:1);});var h='<div class="analysis-summary"><div class="as-item"><div class="as-val">'+results.length+'</div><div class="as-lbl">Dilutions</div></div></div>';h+='<div style="overflow-x:auto"><table class="rtbl"><thead><tr><th>Dilution</th><th>Layer</th><th>R</th><th>G</th><th>B</th><th>Hue°</th><th>Sat%</th><th>Val%</th><th>OD</th><th>Hb</th></tr></thead><tbody>';sorted.forEach(function(r){['rbc','plasma','buffy'].forEach(function(n){var l=r.layers[n];if(!l)return;h+='<tr><td><b>'+(r.dilution||'?')+'</b></td><td>'+n.toUpperCase()+'</td><td>'+l.rgb.R+'</td><td>'+l.rgb.G+'</td><td>'+l.rgb.B+'</td><td>'+l.hsv.H+'</td><td>'+l.hsv.S+'</td><td>'+l.hsv.V+'</td><td>'+l.od+'</td><td>'+(n==='rbc'?r.hb+' g/dL':'')+'</td></tr>';});});h+='</tbody></table></div>';el.innerHTML=h;}
 function renderTimeResults(results){var el=document.getElementById('b-results');var sorted=[].concat(results).sort(function(a,b){return(a.timePoint||'Week 0').localeCompare(b.timePoint||'Week 0');});var labels=sorted.map(function(r){return r.timePoint||'?';});var hbData=sorted.map(function(r){return r.hb;});var hctData=sorted.map(function(r){return r.hct;});mk('b-layers',{type:'line',data:{labels:labels,datasets:[{label:'Hb (g/dL)',data:hbData,borderColor:'#00e5a0',backgroundColor:'rgba(0,229,160,.1)',fill:true,tension:.4,pointRadius:6,borderWidth:2},{label:'Hct%',data:hctData,borderColor:'#3b82f6',borderDash:[5,3],fill:false,tension:.4,pointRadius:4,borderWidth:1.5}]},options:{responsive:true,plugins:{legend:lO,title:{display:true,text:'Hb Recovery Over Time',color:'#e2e8f0',font:{size:11}}},scales:{x:{ticks:tO,grid:gO},y:{min:0,max:18,ticks:tO,grid:gO,title:{display:true,text:'Hb (g/dL)',color:'#64748b'}}}}});
   var h='<div class="analysis-summary"><div class="as-item"><div class="as-val">'+results.length+'</div><div class="as-lbl">Time Points</div></div><div class="as-item"><div class="as-val">'+(hbData[hbData.length-1]-hbData[0]).toFixed(1)+'</div><div class="as-lbl">Hb Change</div></div></div>';
@@ -691,6 +771,278 @@ function exportSim(fmt){
 
 // ── TOAST ──
 function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');clearTimeout(window._tto);window._tto=setTimeout(function(){t.classList.remove('on');},2600);}
+
+// ═══════════════════════════════════════════════════════════════
+//  ENHANCED CALIBRATION (Beer-Lambert, Image-based, Statistics)
+// ═══════════════════════════════════════════════════════════════
+var S_calMethod = 'absorbance';
+var S_enhancedCal = null;
+
+var DEFAULT_CAL_DATA = [
+  {conc:0, val:0.000, label:'Blank'},
+  {conc:1.56, val:0.086, label:'Std 1'},
+  {conc:3.13, val:0.132, label:'Std 2'},
+  {conc:6.25, val:0.214, label:'Std 3'},
+  {conc:12.5, val:0.368, label:'Std 4'},
+  {conc:25, val:0.612, label:'Std 5'},
+  {conc:50, val:0.973, label:'Std 6'},
+  {conc:100, val:1.865, label:'Std 7'}
+];
+
+function setCalMethod(method, el) {
+  S_calMethod = method;
+  document.querySelectorAll('.cms').forEach(function(b){b.classList.remove('on');});
+  el.classList.add('on');
+  var labels = {
+    absorbance: 'Absorbance',
+    rgb: 'Mean Red (0-255)',
+    hsv: 'Hue° / 3.6',
+    lab: 'LAB L* (0-100)',
+    od: 'Optical Density'
+  };
+  document.getElementById('cal-value-label').textContent = labels[method] || 'Value';
+  // Rebuild rows with current method hint
+  buildEnhancedCalRows();
+}
+
+function buildEnhancedCalRows() {
+  var c = document.getElementById('cal-rows-enhanced');
+  c.innerHTML = '';
+  DEFAULT_CAL_DATA.forEach(function(item, i) {
+    var d = document.createElement('div');
+    d.className = 'cal-row';
+    d.innerHTML = '<span class="rn">' + (i + 1) + '</span>' +
+      '<input type="number" class="ecc" placeholder="conc" value="' + item.conc + '" step="any">' +
+      '<input type="number" class="ecv" placeholder="val" value="' + item.val + '" step="any">' +
+      '<span style="font-size:9px;color:var(--muted);width:50px">' + item.label + '</span>';
+    c.appendChild(d);
+  });
+}
+
+function addEnhancedCalRow() {
+  var c = document.getElementById('cal-rows-enhanced');
+  var d = document.createElement('div');
+  d.className = 'cal-row';
+  d.innerHTML = '<span class="rn">' + (c.children.length + 1) + '</span>' +
+    '<input type="number" class="ecc" placeholder="conc" step="any">' +
+    '<input type="number" class="ecv" placeholder="val" step="any">' +
+    '<span style="font-size:9px;color:var(--muted);width:50px">Std</span>';
+  c.appendChild(d);
+}
+
+function resetDefaultCalibration() {
+  buildEnhancedCalRows();
+  document.getElementById('cal-eq-enhanced').innerHTML = '';
+  document.getElementById('cal-stats-enhanced').innerHTML = '';
+  S_enhancedCal = null;
+  toast('Defaults restored');
+}
+
+function getEnhancedCalData() {
+  var cc = document.querySelectorAll('.ecc');
+  var cv = document.querySelectorAll('.ecv');
+  var pts = [];
+  for (var i = 0; i < cc.length; i++) {
+    var x = parseFloat(cc[i].value);
+    var y = parseFloat(cv[i].value);
+    if (!isNaN(x) && !isNaN(y)) {
+      pts.push({x: x, y: y});
+    }
+  }
+  return pts;
+}
+
+function computeLinearRegression(pts) {
+  var n = pts.length;
+  if (n < 3) return null;
+  var sx = 0, sy = 0, sxy = 0, sx2 = 0;
+  for (var i = 0; i < n; i++) {
+    sx += pts[i].x;
+    sy += pts[i].y;
+    sxy += pts[i].x * pts[i].y;
+    sx2 += pts[i].x * pts[i].x;
+  }
+  var slope = (n * sxy - sx * sy) / (n * sx2 - sx * sx);
+  var intercept = (sy - slope * sx) / n;
+  var ym = sy / n;
+  var ssRes = 0, ssTot = 0;
+  for (var j = 0; j < n; j++) {
+    var yPred = slope * pts[j].x + intercept;
+    ssRes += (pts[j].y - yPred) * (pts[j].y - yPred);
+    ssTot += (pts[j].y - ym) * (pts[j].y - ym);
+  }
+  var r2 = 1 - ssRes / ssTot;
+  var rmse = Math.sqrt(ssRes / n);
+  return {
+    slope: slope,
+    intercept: intercept,
+    r2: r2,
+    rmse: rmse,
+    n: n,
+    equation: 'y = ' + slope.toFixed(5) + 'x + ' + intercept.toFixed(5)
+  };
+}
+
+function buildEnhancedCalibration() {
+  var pts = getEnhancedCalData();
+  if (pts.length < 3) { toast('Need at least 3 data points'); return; }
+  
+  var reg = computeLinearRegression(pts);
+  if (!reg) { toast('Regression failed'); return; }
+  
+  S_enhancedCal = { points: pts, regression: reg, method: S_calMethod };
+  
+  // Update the original calCurve for compatibility
+  S.calCurve = { slope: reg.slope, intercept: reg.intercept, r2: reg.r2, pts: pts };
+  
+  // Display equation
+  var quality = reg.r2 > 0.99 ? '✅ Excellent' : reg.r2 > 0.95 ? '✓ Good' : '⚠ Check data';
+  document.getElementById('cal-eq-enhanced').innerHTML =
+    '<div style="padding:10px;background:var(--s2);border-radius:var(--radius-sm);margin-top:8px;line-height:1.8">' +
+    '<b>Beer-Lambert: A = εbc</b><br>' +
+    '📈 <b>Equation:</b> y = ' + reg.slope.toFixed(5) + 'x + ' + reg.intercept.toFixed(5) + '<br>' +
+    '📊 <b>R²:</b> ' + reg.r2.toFixed(6) + ' — ' + quality + '<br>' +
+    '📉 <b>RMSE:</b> ' + reg.rmse.toFixed(6) + '<br>' +
+    '📋 <b>Slope (εb):</b> ' + reg.slope.toFixed(5) + ' L/mg · <b>Intercept:</b> ' + reg.intercept.toFixed(5) +
+    '</div>';
+  
+  // Display stats
+  var statsHtml = '';
+  var stats = [
+    {lbl:'Slope', val: reg.slope.toFixed(5)},
+    {lbl:'Intercept', val: reg.intercept.toFixed(5)},
+    {lbl:'R²', val: reg.r2.toFixed(6)},
+    {lbl:'RMSE', val: reg.rmse.toFixed(6)},
+    {lbl:'N Points', val: reg.n},
+    {lbl:'Method', val: S_calMethod}
+  ];
+  stats.forEach(function(s) {
+    statsHtml += '<div class="cs-item"><div class="cs-val">' + s.val + '</div><div class="cs-lbl">' + s.lbl + '</div></div>';
+  });
+  document.getElementById('cal-stats-enhanced').innerHTML = statsHtml;
+  
+  // Draw Beer-Lambert curve
+  drawBeerLambertCurve(pts, reg);
+  
+  // Also update the original standard curve chart
+  drawCurveChart();
+  
+  // Update region concentrations if analyzed
+  if (S.analyzed) {
+    S.cRegions.forEach(function(r) {
+      if (r.od != null) r.conc = concFromOD(r.od);
+    });
+    renderCRegionList();
+    var sm = S.cRegions.filter(function(r){return r.type === 'sample';});
+    if (sm.length) renderCResults(sm.map(function(r){return Object.assign({}, r, {blankCorrectedOD: r.od, concentration: r.conc});}), S.cMode);
+  }
+  
+  toast('✓ Calibration curve built (R² = ' + reg.r2.toFixed(4) + ')');
+}
+
+function drawBeerLambertCurve(pts, reg) {
+  var maxX = 0;
+  for (var i = 0; i < pts.length; i++) { if (pts[i].x > maxX) maxX = pts[i].x; }
+  maxX = Math.ceil(maxX * 1.1);
+  var xs = [];
+  for (var j = 0; j <= maxX; j += maxX / 50) xs.push(j);
+  var ys = xs.map(function(x){return reg.slope * x + reg.intercept;});
+  
+  mk('c-beer-lambert', {
+    type: 'scatter',
+    data: {
+      datasets: [
+        {
+          label: 'Beer-Lambert: y = ' + reg.slope.toFixed(4) + 'x + ' + reg.intercept.toFixed(4) + ' (R²=' + reg.r2.toFixed(4) + ')',
+          data: xs.map(function(x, i){return {x: x, y: ys[i]};}),
+          type: 'line',
+          borderColor: '#00e5a0',
+          backgroundColor: 'rgba(0,229,160,.1)',
+          pointRadius: 0,
+          borderWidth: 2,
+          fill: false
+        },
+        {
+          label: 'Standards',
+          data: pts.map(function(p){return {x: p.x, y: p.y};}),
+          backgroundColor: '#3b82f6',
+          pointRadius: 6,
+          pointHoverRadius: 8,
+          borderColor: '#60a5fa',
+          borderWidth: 2
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: lO,
+        title: { display: true, text: 'Beer-Lambert Calibration Curve', color: '#e2e8f0', font: { size: 11 } },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              if (ctx.datasetIndex === 1) {
+                return 'Conc: ' + ctx.parsed.x.toFixed(2) + ' mg/L, Value: ' + ctx.parsed.y.toFixed(4);
+              }
+              return '';
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'Iron Concentration (mg/L)', color: '#64748b' },
+          ticks: tO,
+          grid: gO,
+          min: 0
+        },
+        y: {
+          title: { display: true, text: S_calMethod === 'absorbance' ? 'Absorbance' : 'Measured Value', color: '#64748b' },
+          ticks: tO,
+          grid: gO,
+          min: 0
+        }
+      }
+    }
+  });
+}
+
+function loadCalFromImageRegions() {
+  // Load measured values from image regions (standards) into the calibration table
+  var st = S.cRegions.filter(function(r){return r.type === 'standard' && r.rgb;});
+  if (st.length < 2) { toast('Need at least 2 measured Standard regions on the image'); return; }
+  
+  var c = document.getElementById('cal-rows-enhanced');
+  c.innerHTML = '';
+  
+  st.forEach(function(r, i) {
+    var val = 0;
+    switch (S_calMethod) {
+      case 'absorbance': val = r.od || 0; break;
+      case 'rgb': val = r.rgb ? r.rgb.R : 0; break;
+      case 'hsv': val = r.hsv ? r.hsv.H / 3.6 : 0; break;
+      case 'lab': val = r.lab ? r.lab.L : 0; break;
+      case 'od': val = r.od || 0; break;
+      default: val = r.od || 0;
+    }
+    var d = document.createElement('div');
+    d.className = 'cal-row';
+    d.innerHTML = '<span class="rn">' + (i + 1) + '</span>' +
+      '<input type="number" class="ecc" placeholder="conc" value="' + (r.conc || '') + '" step="any">' +
+      '<input type="number" class="ecv" placeholder="val" value="' + val.toFixed(4) + '" step="any">' +
+      '<span style="font-size:9px;color:var(--muted);width:50px">' + r.name + '</span>';
+    c.appendChild(d);
+  });
+  
+  toast('✓ Loaded ' + st.length + ' standard values from image regions. Enter concentrations.');
+}
+
+// Override buildCalRows to also build enhanced rows
+var _origBuildCalRows = buildCalRows;
+buildCalRows = function() {
+  _origBuildCalRows();
+  buildEnhancedCalRows();
+};
 
 // ── INIT ──
 buildCalRows();
