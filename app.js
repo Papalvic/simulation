@@ -5,8 +5,27 @@ var S = {
   cMode:'single', cImg:null, cScale:1, cRegions:[], cShape:'rect', calCurve:null, analyzed:false,
   bMode:'sep', bStrips:[], bActiveStrip:0, bShape:'rect',
   bResults:null, bMultiResults:[],
-  simRes:null, charts:{}, drawing:false, sx:0, sy:0
+  simRes:null, charts:{}, drawing:false, sx:0, sy:0,
+  ironCalImg:null, ironCalRois:[], ironCalShape:'rect', ironCalDrawing:false, ironCalDragStart:null, ironCalCurrentShape:null,
+  ironSampleImg:null, ironSampleRois:[], ironSampleShape:'rect', ironSampleDrawing:false, ironSampleDragStart:null, ironSampleCurrentShape:null,
+  ironModel:null, ironResults:null
 };
+
+/* Built-in iron calibration standards with real image color data */
+var IRON_BUILTIN_STANDARDS = [
+  { level:1, concentration:100, dilutionFactor:1, absorbance560:0.419, colorData:{avgR:24,avgG:14,avgB:16,hsv:{h:348,s:41.7,v:9.4},lab:{L:4.93,a:2.44,b:1.22},intensity:16.62} },
+  { level:2, concentration:50, dilutionFactor:2, absorbance560:0.386, colorData:{avgR:104,avgG:22,avgB:4,hsv:{h:10.8,s:96.2,v:40.8},lab:{L:22.04,a:33.5,b:30.2},intensity:41.06} },
+  { level:3, concentration:25, dilutionFactor:4, absorbance560:0.517, colorData:{avgR:164,avgG:95,avgB:3,hsv:{h:34.3,s:98.2,v:64.3},lab:{L:47.09,a:25.6,b:53.8},intensity:104.51} },
+  { level:4, concentration:12.5, dilutionFactor:8, absorbance560:0.407, colorData:{avgR:170,avgG:157,avgB:71,hsv:{h:52.1,s:58.2,v:66.7},lab:{L:64.25,a:5.2,b:38.1},intensity:152.96} },
+  { level:5, concentration:6.25, dilutionFactor:16, absorbance560:0.230, colorData:{avgR:177,avgG:189,avgB:147,hsv:{h:77.1,s:22.2,v:74.1},lab:{L:74.73,a:-8.1,b:22.5},intensity:180.69} },
+  { level:6, concentration:3.125, dilutionFactor:32, absorbance560:0.316, colorData:{avgR:170,avgG:194,avgB:180,hsv:{h:145,s:12.4,v:76.1},lab:{L:76.33,a:-9.5,b:5.8},intensity:185.42} },
+  { level:7, concentration:1.5625, dilutionFactor:64, absorbance560:0.234, colorData:{avgR:170,avgG:196,avgB:185,hsv:{h:154.6,s:13.3,v:76.9},lab:{L:77.00,a:-10.2,b:4.1},intensity:187.18} },
+  { level:8, concentration:0.78125, dilutionFactor:128, absorbance560:0.122, colorData:{avgR:156,avgG:183,avgB:172,hsv:{h:155.6,s:14.8,v:71.8},lab:{L:72.17,a:-10.8,b:3.5},intensity:175.35} }
+];
+
+var IRON_DEFAULT_CONCS = [100, 50, 25, 12.5, 6.25, 3.125, 1.5625, 0.78125];
+var IRON_DEFAULT_DILUTIONS = [1, 2, 4, 8, 16, 32, 64, 128];
+var IRON_DEFAULT_ABSORBANCES = [0.419, 0.386, 0.517, 0.407, 0.230, 0.316, 0.234, 0.122];
 
 var VEG_DB = [
   {name:'Spinach',iron:2.7,type:'Leafy green',vitC:28,note:'High oxalates — pair with vitamin C'},
@@ -169,9 +188,22 @@ function renderCRegionList(){
 function updateCRegion(idx,f,v){if(f==='type')S.cRegions[idx].type=v;else S.cRegions[idx].name=v;drawCanvas('c');renderCRegionList();}
 function deleteCRegion(idx){S.cRegions.splice(idx,1);drawCanvas('c');renderCRegionList();if(!S.cRegions.length)document.getElementById('c-analyze-btn').disabled=true;}
 function clearAllRegions(){S.cRegions=[];S.analyzed=false;S.calCurve=null;if(S.cImg)drawCanvas('c');renderCRegionList();document.getElementById('c-results').innerHTML='<p style="font-size:12px;color:var(--muted);text-align:center;padding:20px">Cleared.</p>';document.getElementById('c-analyze-btn').disabled=true;document.getElementById('cal-eq').innerHTML='';}
-function setAnalysisMode(mode,el){S.cMode=mode;document.querySelectorAll('#pg-c .mb').forEach(function(b){b.classList.remove('on');});el.classList.add('on');document.querySelectorAll('.dcmode').forEach(function(b){b.classList.remove('on');});var d=document.querySelector('.dcmode[data-cmode="'+mode+'"]');if(d)d.classList.add('on');updateModeInfo();}
+function setAnalysisMode(mode,el){
+  S.cMode=mode;
+  document.querySelectorAll('#pg-c .mb').forEach(function(b){b.classList.remove('on');});
+  el.classList.add('on');
+  document.querySelectorAll('.dcmode').forEach(function(b){b.classList.remove('on');});
+  var d=document.querySelector('.dcmode[data-cmode="'+mode+'"]');if(d)d.classList.add('on');
+  // Show/hide iron cards
+  var ironCal=document.getElementById('iron-cal-builder-card');
+  var ironSample=document.getElementById('iron-sample-card');
+  if(ironCal)ironCal.style.display=(mode==='iron')?'block':'none';
+  if(ironSample)ironSample.style.display=(mode==='iron')?'block':'none';
+  updateModeInfo();
+  if(mode==='iron')updateIronModelStatus();
+}
 function updateModeInfo(){
-  var ms={single:'Single Sample — analyzes Sample regions.',blank:'vs Blank — compares Sample against Blank.',standard:'vs Standard — compares Sample against Standard.',calib:'Full Calibration — Standards build curve, quantifies Samples.',compare:'Compare Samples — side-by-side Sample comparison.'};
+  var ms={single:'Single Sample — analyzes Sample regions.',blank:'vs Blank — compares Sample against Blank.',standard:'vs Standard — compares Sample against Standard.',calib:'Full Calibration — Standards build curve, quantifies Samples.',compare:'Compare Samples — side-by-side Sample comparison.',iron:'Iron Analysis — Build iron calibration from μPAD image, then analyze sample μPAD for iron concentration.'};
   document.getElementById('c-mode-info').innerHTML='<strong>'+S.cMode+'</strong> — '+(ms[S.cMode]||'');
 }
 
@@ -662,8 +694,18 @@ function loadFromBlood() {
   toast('✓ Hb loaded: ' + S.bResults.hb + ' g/dL from blood analysis');
 }
 function loadFromColor() {
+  // First check if iron analysis results are available (Iron Analysis mode)
+  if (S.ironResults && S.ironResults.stats && S.ironResults.stats.mean !== null) {
+    var ironConc = S.ironResults.stats.mean;
+    // Convert mg/L to mg/100g (assuming 1g sample in 10mL, factor ~2)
+    var per100g = +(ironConc * 2).toFixed(2);
+    document.getElementById('s-fe').value = per100g;
+    toast('✓ Iron loaded: ' + per100g + ' mg/100g from iron analysis (mean conc: ' + ironConc + ' mg/L)');
+    return;
+  }
+  // Fall back to standard colorimetry calibration
   var r = null; for (var i = 0; i < S.cRegions.length; i++) { if (S.cRegions[i].conc != null) { r = S.cRegions[i]; break; } }
-  if (!r || !S.calCurve) { toast('Run colorimetry with calibration curve first'); return; }
+  if (!r || !S.calCurve) { toast('Run colorimetry with calibration curve or iron analysis first'); return; }
   var per100g = +(r.conc * (10 / 0.5) / 10).toFixed(2);
   document.getElementById('s-fe').value = per100g;
   toast('✓ Iron loaded: ' + per100g + ' mg/100g from colorimetry');
@@ -1043,6 +1085,471 @@ buildCalRows = function() {
   _origBuildCalRows();
   buildEnhancedCalRows();
 };
+
+// ═══════════════════════════════════════════════════════════════
+//  IRON CALIBRATION & ANALYSIS
+// ═══════════════════════════════════════════════════════════════
+var IRON_STORAGE_KEY = 'mf_iron_calibration_model';
+
+function ironGetModel() {
+  try { var m = JSON.parse(localStorage.getItem(IRON_STORAGE_KEY)); if (m) return m; } catch(e) {}
+  return buildBuiltinIronModel();
+}
+
+function buildBuiltinIronModel() {
+  var features = ['R','G','B','H','S','V','L*','a*','b*','Intensity'];
+  var best = { feature:'', r2:-1, rmse:Infinity, mae:Infinity, model:null };
+  features.forEach(function(f) {
+    var pts = [];
+    IRON_BUILTIN_STANDARDS.forEach(function(s) {
+      var val = null;
+      if (f==='R') val=s.colorData.avgR;
+      else if (f==='G') val=s.colorData.avgG;
+      else if (f==='B') val=s.colorData.avgB;
+      else if (f==='H') val=s.colorData.hsv.h;
+      else if (f==='S') val=s.colorData.hsv.s;
+      else if (f==='V') val=s.colorData.hsv.v;
+      else if (f==='L*') val=s.colorData.lab.L;
+      else if (f==='a*') val=s.colorData.lab.a;
+      else if (f==='b*') val=s.colorData.lab.b;
+      else if (f==='Intensity') val=s.colorData.intensity;
+      if (val!==null) pts.push({x:s.concentration, y:val});
+    });
+    if (pts.length<3) return;
+    var lr = computeLinearRegression(pts);
+    if (lr && lr.r2>best.r2) { best={feature:f,r2:lr.r2,rmse:lr.rmse,mae:Math.sqrt(lr.rmse),model:lr}; }
+  });
+  var concs = IRON_BUILTIN_STANDARDS.map(function(s){return s.concentration;});
+  return {
+    modelVersion:'1.0', active:true, wavelengthNm:560, stockConcentrationMgL:100,
+    standards:IRON_BUILTIN_STANDARDS, selectedFeature:best.feature, regressionType:'linear',
+    coefficients:[best.model.slope, best.model.intercept], intercept:best.model.intercept,
+    equation:'y = '+best.model.slope.toFixed(4)+'x + '+best.model.intercept.toFixed(4),
+    rSquared:best.r2, rmse:best.rmse, mae:best.mae,
+    minimumConcentrationMgL:Math.min.apply(null,concs), maximumConcentrationMgL:Math.max.apply(null,concs),
+    calibrationDate:new Date().toISOString(), isBuiltIn:true
+  };
+}
+
+function updateIronModelStatus() {
+  var model = ironGetModel();
+  var el = document.getElementById('iron-model-status');
+  if (el && model && model.active) {
+    el.innerHTML = '✅ <strong>Active Model:</strong> ' + model.selectedFeature + ' · R² = ' + model.rSquared.toFixed(4) + ' · Range: ' + model.minimumConcentrationMgL + '–' + model.maximumConcentrationMgL + ' mg/L' + (model.isBuiltIn?' · Built-in':'');
+    el.style.background = 'rgba(0,229,160,.08)';
+    el.style.borderColor = 'var(--accent)';
+  }
+}
+
+function useBuiltinIronModel() {
+  S.ironModel = buildBuiltinIronModel();
+  try { localStorage.removeItem(IRON_STORAGE_KEY); } catch(e) {}
+  updateIronModelStatus();
+  toast('✓ Built-in iron model activated (R² = ' + S.ironModel.rSquared.toFixed(4) + ')');
+}
+
+function loadIronCalImage(ev) {
+  var f = ev.target.files[0]; if (!f) return;
+  var url = URL.createObjectURL(f); var img = new Image();
+  img.onload = function() {
+    S.ironCalImg = img;
+    var uz = document.getElementById('iron-cal-upload');
+    uz.innerHTML = '<div class="ul" style="font-size:10px">'+f.name+'</div><input type="file" id="iron-cal-file" accept="image/*" onchange="loadIronCalImage(event)" style="display:none">';
+    uz.classList.add('loaded');
+    uz.onclick = function() { document.getElementById('iron-cal-file').click(); };
+    var box = document.getElementById('iron-cal-cbox'), ph = document.getElementById('iron-cal-ph');
+    if (ph) ph.style.display = 'none';
+    var cv = document.getElementById('iron-cal-cv');
+    var maxW = box.clientWidth - 4 || 600, scale = Math.min(1, maxW / img.width);
+    cv.width = Math.round(img.width * scale); cv.height = Math.round(img.height * scale);
+    cv.style.display = 'block';
+    document.getElementById('iron-cal-canvas-section').style.display = 'block';
+    document.getElementById('iron-cal-upload').style.display = 'none';
+    S.ironCalRois = [];
+    drawIronCalCanvas();
+    addIronCalCanvasEvents();
+    toast('✓ Calibration image loaded');
+  };
+  img.src = url;
+}
+
+function setIronCalShape(shape, el) {
+  S.ironCalShape = shape;
+  document.querySelectorAll('#iron-cal-canvas-section .stb').forEach(function(b){b.classList.remove('on');});
+  el.classList.add('on');
+}
+
+function startIronCalDrawing() {
+  S.ironCalDrawing = true;
+  document.getElementById('iron-cal-start').style.display = 'none';
+  document.getElementById('iron-cal-stop').style.display = '';
+  toast('Draw ROI on calibration image');
+}
+
+function stopIronCalDrawing() {
+  S.ironCalDrawing = false;
+  document.getElementById('iron-cal-start').style.display = '';
+  document.getElementById('iron-cal-stop').style.display = 'none';
+}
+
+function clearIronCalRois() {
+  S.ironCalRois = [];
+  drawIronCalCanvas();
+  renderIronCalStandards();
+  document.getElementById('iron-cal-results').style.display = 'none';
+  document.getElementById('iron-cal-save-btn').style.display = 'none';
+}
+
+function drawIronCalCanvas() {
+  var cv = document.getElementById('iron-cal-cv');
+  if (!cv || !cv.width || !S.ironCalImg) return;
+  var ctx = cv.getContext('2d');
+  ctx.drawImage(S.ironCalImg, 0, 0, cv.width, cv.height);
+  var colors = ['#00e5a0','#3b82f6','#f97316','#eab308','#ef4444','#a855f7','#ec4899','#06b6d4'];
+  S.ironCalRois.forEach(function(r, i) {
+    var c = colors[i % colors.length];
+    ctx.strokeStyle = c; ctx.lineWidth = 2.5; ctx.fillStyle = c + '25';
+    ctx.strokeRect(r.x, r.y, r.w, r.h);
+    ctx.fillRect(r.x, r.y, r.w, r.h);
+    ctx.fillStyle = c; ctx.font = 'bold 10px monospace';
+    ctx.fillText('Std ' + (i+1), r.x + 3, r.y > 14 ? r.y - 4 : r.y + r.h + 14);
+  });
+  if (S.ironCalCurrentShape) {
+    ctx.strokeStyle = '#00e5a0'; ctx.lineWidth = 2; ctx.setLineDash([5,3]);
+    ctx.fillStyle = 'rgba(0,229,160,0.1)';
+    ctx.fillRect(S.ironCalCurrentShape.x, S.ironCalCurrentShape.y, S.ironCalCurrentShape.w, S.ironCalCurrentShape.h);
+    ctx.strokeRect(S.ironCalCurrentShape.x, S.ironCalCurrentShape.y, S.ironCalCurrentShape.w, S.ironCalCurrentShape.h);
+    ctx.setLineDash([]);
+  }
+}
+
+function addIronCalCanvasEvents() {
+  var cv = document.getElementById('iron-cal-cv');
+  function toXY(cx, cy) { var rc = cv.getBoundingClientRect(); return { x: (cx-rc.left)*(cv.width/rc.width), y: (cy-rc.top)*(cv.height/rc.height) }; }
+  cv.onmousedown = function(e) { if (!S.ironCalDrawing) return; var p = toXY(e.clientX, e.clientY); S.ironCalDragStart = p; S.ironCalCurrentShape = null; };
+  cv.onmousemove = function(e) { if (!S.ironCalDrawing || !S.ironCalDragStart) return; var p = toXY(e.clientX, e.clientY); S.ironCalCurrentShape = { x: Math.min(S.ironCalDragStart.x, p.x), y: Math.min(S.ironCalDragStart.y, p.y), w: Math.abs(p.x-S.ironCalDragStart.x), h: Math.abs(p.y-S.ironCalDragStart.y) }; drawIronCalCanvas(); };
+  cv.onmouseup = function(e) { if (!S.ironCalDrawing || !S.ironCalDragStart) return; var p = toXY(e.clientX, e.clientY); var w = Math.abs(p.x-S.ironCalDragStart.x), h = Math.abs(p.y-S.ironCalDragStart.y); if (w > 10 && h > 10) { var roi = { x: Math.min(S.ironCalDragStart.x, p.x), y: Math.min(S.ironCalDragStart.y, p.y), w: w, h: h }; roi.colorData = extractIronCalRoiData(roi); S.ironCalRois.push(roi); drawIronCalCanvas(); renderIronCalStandards(); toast('✓ Standard ' + S.ironCalRois.length + ' added'); } S.ironCalDragStart = null; S.ironCalCurrentShape = null; };
+  cv.onmouseleave = function() { if (S.ironCalDrawing) { S.ironCalDragStart = null; S.ironCalCurrentShape = null; drawIronCalCanvas(); } };
+  var td = false;
+  cv.ontouchstart = function(e) { if (!S.ironCalDrawing) return; e.preventDefault(); var t = e.touches[0], p = toXY(t.clientX, t.clientY); td = true; S.ironCalDragStart = p; S.ironCalCurrentShape = null; };
+  cv.ontouchmove = function(e) { if (!td || !S.ironCalDragStart) return; e.preventDefault(); var t = e.touches[0], p = toXY(t.clientX, t.clientY); S.ironCalCurrentShape = { x: Math.min(S.ironCalDragStart.x, p.x), y: Math.min(S.ironCalDragStart.y, p.y), w: Math.abs(p.x-S.ironCalDragStart.x), h: Math.abs(p.y-S.ironCalDragStart.y) }; drawIronCalCanvas(); };
+  cv.ontouchend = function(e) { if (!td) return; td = false; var t = e.changedTouches[0], p = toXY(t.clientX, t.clientY); var w = Math.abs(p.x-S.ironCalDragStart.x), h = Math.abs(p.y-S.ironCalDragStart.y); if (w > 10 && h > 10) { var roi = { x: Math.min(S.ironCalDragStart.x, p.x), y: Math.min(S.ironCalDragStart.y, p.y), w: w, h: h }; roi.colorData = extractIronCalRoiData(roi); S.ironCalRois.push(roi); drawIronCalCanvas(); renderIronCalStandards(); toast('✓ Standard ' + S.ironCalRois.length + ' added'); } S.ironCalDragStart = null; S.ironCalCurrentShape = null; };
+  setupPinchZoom(cv);
+}
+
+function extractIronCalRoiData(roi) {
+  var cv = document.getElementById('iron-cal-cv');
+  if (!cv) return null;
+  var px = getPixels(cv, roi.x, roi.y, roi.w, roi.h);
+  var rgb = meanRGB(px);
+  var hsv = toHSV(rgb.R, rgb.G, rgb.B);
+  var lab = toLAB(rgb.R, rgb.G, rgb.B);
+  var intensity = 0.299*rgb.R + 0.587*rgb.G + 0.114*rgb.B;
+  return { avgR: rgb.R, avgG: rgb.G, avgB: rgb.B, hsv: hsv, lab: lab, intensity: intensity, pixelCount: px.length/4 };
+}
+
+function renderIronCalStandards() {
+  var el = document.getElementById('iron-cal-standards-list');
+  if (!S.ironCalRois.length) { el.innerHTML = ''; return; }
+  var html = '<div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:6px;letter-spacing:.4px">Calibration Standards (' + S.ironCalRois.length + ')</div>';
+  html += '<div style="overflow-x:auto"><table class="rtbl"><thead><tr><th>#</th><th>Conc (mg/L)</th><th>Dil</th><th>A560</th><th>R</th><th>G</th><th>B</th><th>H°</th><th>S%</th><th>V%</th><th>L*</th><th>a*</th><th>b*</th><th>Int.</th><th>✕</th></tr></thead><tbody>';
+  S.ironCalRois.forEach(function(roi, i) {
+    var d = IRON_DEFAULT_CONCS[i] !== undefined ? IRON_DEFAULT_CONCS[i] : '';
+    var dil = IRON_DEFAULT_DILUTIONS[i] !== undefined ? IRON_DEFAULT_DILUTIONS[i] : '';
+    var abs = IRON_DEFAULT_ABSORBANCES[i] !== undefined ? IRON_DEFAULT_ABSORBANCES[i] : '';
+    var cd = roi.colorData || {};
+    html += '<tr><td>'+(i+1)+'</td><td><input type="number" class="ironCalConc" data-idx="'+i+'" value="'+d+'" step="any" style="width:60px;background:var(--s2);border:1px solid var(--border);color:var(--text);padding:3px;border-radius:4px;font-size:10px"></td><td>'+dil+'</td><td><input type="number" class="ironCalAbs" data-idx="'+i+'" value="'+abs+'" step="any" style="width:60px;background:var(--s2);border:1px solid var(--border);color:var(--text);padding:3px;border-radius:4px;font-size:10px"></td><td>'+(cd.avgR||'')+'</td><td>'+(cd.avgG||'')+'</td><td>'+(cd.avgB||'')+'</td><td>'+(cd.hsv?cd.hsv.H:'')+'</td><td>'+(cd.hsv?cd.hsv.S:'')+'</td><td>'+(cd.hsv?cd.hsv.V:'')+'</td><td>'+(cd.lab?cd.lab.L:'')+'</td><td>'+(cd.lab?cd.lab.A:'')+'</td><td>'+(cd.lab?cd.lab.B:'')+'</td><td>'+(cd.intensity!==undefined?cd.intensity.toFixed(2):'')+'</td><td><button class="btn danger btn-sm" style="padding:2px 6px;font-size:10px" onclick="deleteIronCalRoi('+i+')">✕</button></td></tr>';
+  });
+  html += '</tbody></table></div>';
+  el.innerHTML = html;
+}
+
+function deleteIronCalRoi(idx) {
+  S.ironCalRois.splice(idx, 1);
+  drawIronCalCanvas();
+  renderIronCalStandards();
+  document.getElementById('iron-cal-results').style.display = 'none';
+  document.getElementById('iron-cal-save-btn').style.display = 'none';
+}
+
+function buildIronCalModel() {
+  if (S.ironCalRois.length < 3) { toast('Need at least 3 calibration standards'); return; }
+  var standards = [];
+  for (var i = 0; i < S.ironCalRois.length; i++) {
+    var concEl = document.querySelector('.ironCalConc[data-idx="'+i+'"]');
+    var absEl = document.querySelector('.ironCalAbs[data-idx="'+i+'"]');
+    var conc = concEl ? parseFloat(concEl.value) : NaN;
+    var abs = absEl ? parseFloat(absEl.value) : NaN;
+    if (isNaN(conc)) { toast('Missing concentration for standard ' + (i+1)); return; }
+    var roi = S.ironCalRois[i];
+    if (!roi.colorData) roi.colorData = extractIronCalRoiData(roi);
+    standards.push({ level: i+1, concentration: conc, dilutionFactor: IRON_DEFAULT_DILUTIONS[i]||1, absorbance560: isNaN(abs)?null:abs, colorData: roi.colorData });
+  }
+  var features = ['R','G','B','H','S','V','L*','a*','b*','Intensity'];
+  var best = { feature:'', r2:-1, rmse:Infinity, mae:Infinity, model:null };
+  features.forEach(function(f) {
+    var pts = [];
+    standards.forEach(function(s) {
+      var val = null;
+      if (f==='R') val=s.colorData.avgR;
+      else if (f==='G') val=s.colorData.avgG;
+      else if (f==='B') val=s.colorData.avgB;
+      else if (f==='H') val=s.colorData.hsv.H;
+      else if (f==='S') val=s.colorData.hsv.S;
+      else if (f==='V') val=s.colorData.hsv.V;
+      else if (f==='L*') val=s.colorData.lab.L;
+      else if (f==='a*') val=s.colorData.lab.A;
+      else if (f==='b*') val=s.colorData.lab.B;
+      else if (f==='Intensity') val=s.colorData.intensity;
+      if (val!==null) pts.push({x:s.concentration, y:val});
+    });
+    if (pts.length<3) return;
+    var lr = computeLinearRegression(pts);
+    if (lr && lr.r2>best.r2) { best={feature:f,r2:lr.r2,rmse:lr.rmse,mae:Math.sqrt(lr.rmse),model:lr}; }
+  });
+  var concs = standards.map(function(s){return s.concentration;});
+  var calModel = {
+    modelVersion:'1.0', active:true, wavelengthNm:560, stockConcentrationMgL:100,
+    standards:standards, selectedFeature:best.feature, regressionType:'linear',
+    coefficients:[best.model.slope, best.model.intercept], intercept:best.model.intercept,
+    equation:'y = '+best.model.slope.toFixed(4)+'x + '+best.model.intercept.toFixed(4),
+    rSquared:best.r2, rmse:best.rmse, mae:best.mae,
+    minimumConcentrationMgL:Math.min.apply(null,concs), maximumConcentrationMgL:Math.max.apply(null,concs),
+    calibrationDate:new Date().toISOString(), isBuiltIn:false
+  };
+  S.ironModel = calModel;
+  var el = document.getElementById('iron-cal-results');
+  el.style.display = 'block';
+  el.innerHTML = '<div class="alert" style="background:rgba(0,229,160,.08);border:1px solid var(--accent);border-radius:6px;padding:10px;color:var(--accent);font-size:12px"><strong>✅ Calibration Complete</strong></div>' +
+    '<div class="cal-stats"><div class="cs-item"><div class="cs-val">'+best.r2.toFixed(4)+'</div><div class="cs-lbl">R²</div></div>' +
+    '<div class="cs-item"><div class="cs-val">'+best.rmse.toFixed(4)+'</div><div class="cs-lbl">RMSE</div></div>' +
+    '<div class="cs-item"><div class="cs-val">'+best.mae.toFixed(4)+'</div><div class="cs-lbl">MAE</div></div>' +
+    '<div class="cs-item"><div class="cs-val">'+best.feature+'</div><div class="cs-lbl">Best Feature</div></div></div>' +
+    '<div style="font-size:11px;font-family:monospace;margin-top:8px;padding:8px;background:var(--s2);border-radius:6px">'+best.model.equation+'</div>';
+  document.getElementById('iron-cal-save-btn').style.display = '';
+  toast('✓ Iron calibration model built (R² = ' + best.r2.toFixed(4) + ')');
+}
+
+function saveIronCalModel() {
+  if (!S.ironModel) return;
+  try { localStorage.setItem(IRON_STORAGE_KEY, JSON.stringify(S.ironModel)); } catch(e) {}
+  updateIronModelStatus();
+  document.getElementById('iron-cal-save-btn').style.display = 'none';
+  toast('✓ Iron calibration model saved and set as active');
+}
+
+function loadIronSampleImage(ev) {
+  var f = ev.target.files[0]; if (!f) return;
+  var url = URL.createObjectURL(f); var img = new Image();
+  img.onload = function() {
+    S.ironSampleImg = img;
+    var uz = document.getElementById('iron-sample-upload');
+    uz.innerHTML = '<div class="ul" style="font-size:10px">'+f.name+'</div><input type="file" id="iron-sample-file" accept="image/*" onchange="loadIronSampleImage(event)" style="display:none">';
+    uz.classList.add('loaded');
+    uz.onclick = function() { document.getElementById('iron-sample-file').click(); };
+    var box = document.getElementById('iron-sample-cbox'), ph = document.getElementById('iron-sample-ph');
+    if (ph) ph.style.display = 'none';
+    var cv = document.getElementById('iron-sample-cv');
+    var maxW = box.clientWidth - 4 || 600, scale = Math.min(1, maxW / img.width);
+    cv.width = Math.round(img.width * scale); cv.height = Math.round(img.height * scale);
+    cv.style.display = 'block';
+    document.getElementById('iron-sample-canvas-section').style.display = 'block';
+    document.getElementById('iron-sample-upload').style.display = 'none';
+    S.ironSampleRois = [];
+    drawIronSampleCanvas();
+    addIronSampleCanvasEvents();
+    toast('✓ Sample image loaded');
+  };
+  img.src = url;
+}
+
+function setIronSampleShape(shape, el) {
+  S.ironSampleShape = shape;
+  document.querySelectorAll('#iron-sample-canvas-section .stb').forEach(function(b){b.classList.remove('on');});
+  el.classList.add('on');
+}
+
+function startIronSampleDrawing() {
+  S.ironSampleDrawing = true;
+  document.getElementById('iron-sample-start').style.display = 'none';
+  document.getElementById('iron-sample-stop').style.display = '';
+  toast('Draw ROI on sample image');
+}
+
+function stopIronSampleDrawing() {
+  S.ironSampleDrawing = false;
+  document.getElementById('iron-sample-start').style.display = '';
+  document.getElementById('iron-sample-stop').style.display = 'none';
+}
+
+function clearIronSampleRois() {
+  S.ironSampleRois = [];
+  drawIronSampleCanvas();
+  renderIronSampleRois();
+  document.getElementById('iron-sample-results').style.display = 'none';
+}
+
+function drawIronSampleCanvas() {
+  var cv = document.getElementById('iron-sample-cv');
+  if (!cv || !cv.width || !S.ironSampleImg) return;
+  var ctx = cv.getContext('2d');
+  ctx.drawImage(S.ironSampleImg, 0, 0, cv.width, cv.height);
+  var colors = ['#00e5a0','#3b82f6','#f97316','#eab308','#ef4444','#a855f7','#ec4899','#06b6d4'];
+  S.ironSampleRois.forEach(function(r, i) {
+    var c = colors[i % colors.length];
+    ctx.strokeStyle = c; ctx.lineWidth = 2.5; ctx.fillStyle = c + '25';
+    ctx.strokeRect(r.x, r.y, r.w, r.h);
+    ctx.fillRect(r.x, r.y, r.w, r.h);
+    ctx.fillStyle = c; ctx.font = 'bold 10px monospace';
+    var dilLabel = r.dilutionFactor ? '1:' + r.dilutionFactor : '1:' + (i > 0 ? Math.pow(2, i) : 1);
+    ctx.fillText('ROI ' + (i+1) + ' (' + dilLabel + ')', r.x + 3, r.y > 14 ? r.y - 4 : r.y + r.h + 14);
+  });
+  if (S.ironSampleCurrentShape) {
+    ctx.strokeStyle = '#00e5a0'; ctx.lineWidth = 2; ctx.setLineDash([5,3]);
+    ctx.fillStyle = 'rgba(0,229,160,0.1)';
+    ctx.fillRect(S.ironSampleCurrentShape.x, S.ironSampleCurrentShape.y, S.ironSampleCurrentShape.w, S.ironSampleCurrentShape.h);
+    ctx.strokeRect(S.ironSampleCurrentShape.x, S.ironSampleCurrentShape.y, S.ironSampleCurrentShape.w, S.ironSampleCurrentShape.h);
+    ctx.setLineDash([]);
+  }
+}
+
+function addIronSampleCanvasEvents() {
+  var cv = document.getElementById('iron-sample-cv');
+  function toXY(cx, cy) { var rc = cv.getBoundingClientRect(); return { x: (cx-rc.left)*(cv.width/rc.width), y: (cy-rc.top)*(cv.height/rc.height) }; }
+  cv.onmousedown = function(e) { if (!S.ironSampleDrawing) return; var p = toXY(e.clientX, e.clientY); S.ironSampleDragStart = p; S.ironSampleCurrentShape = null; };
+  cv.onmousemove = function(e) { if (!S.ironSampleDrawing || !S.ironSampleDragStart) return; var p = toXY(e.clientX, e.clientY); S.ironSampleCurrentShape = { x: Math.min(S.ironSampleDragStart.x, p.x), y: Math.min(S.ironSampleDragStart.y, p.y), w: Math.abs(p.x-S.ironSampleDragStart.x), h: Math.abs(p.y-S.ironSampleDragStart.y) }; drawIronSampleCanvas(); };
+  cv.onmouseup = function(e) { if (!S.ironSampleDrawing || !S.ironSampleDragStart) return; var p = toXY(e.clientX, e.clientY); var w = Math.abs(p.x-S.ironSampleDragStart.x), h = Math.abs(p.y-S.ironSampleDragStart.y); if (w > 10 && h > 10) { var roi = { x: Math.min(S.ironSampleDragStart.x, p.x), y: Math.min(S.ironSampleDragStart.y, p.y), w: w, h: h }; roi.colorData = extractIronSampleRoiData(roi); S.ironSampleRois.push(roi); drawIronSampleCanvas(); renderIronSampleRois(); toast('✓ Sample ROI ' + S.ironSampleRois.length + ' added'); } S.ironSampleDragStart = null; S.ironSampleCurrentShape = null; };
+  cv.onmouseleave = function() { if (S.ironSampleDrawing) { S.ironSampleDragStart = null; S.ironSampleCurrentShape = null; drawIronSampleCanvas(); } };
+  var td = false;
+  cv.ontouchstart = function(e) { if (!S.ironSampleDrawing) return; e.preventDefault(); var t = e.touches[0], p = toXY(t.clientX, t.clientY); td = true; S.ironSampleDragStart = p; S.ironSampleCurrentShape = null; };
+  cv.ontouchmove = function(e) { if (!td || !S.ironSampleDragStart) return; e.preventDefault(); var t = e.touches[0], p = toXY(t.clientX, t.clientY); S.ironSampleCurrentShape = { x: Math.min(S.ironSampleDragStart.x, p.x), y: Math.min(S.ironSampleDragStart.y, p.y), w: Math.abs(p.x-S.ironSampleDragStart.x), h: Math.abs(p.y-S.ironSampleDragStart.y) }; drawIronSampleCanvas(); };
+  cv.ontouchend = function(e) { if (!td) return; td = false; var t = e.changedTouches[0], p = toXY(t.clientX, t.clientY); var w = Math.abs(p.x-S.ironSampleDragStart.x), h = Math.abs(p.y-S.ironSampleDragStart.y); if (w > 10 && h > 10) { var roi = { x: Math.min(S.ironSampleDragStart.x, p.x), y: Math.min(S.ironSampleDragStart.y, p.y), w: w, h: h }; roi.colorData = extractIronSampleRoiData(roi); S.ironSampleRois.push(roi); drawIronSampleCanvas(); renderIronSampleRois(); toast('✓ Sample ROI ' + S.ironSampleRois.length + ' added'); } S.ironSampleDragStart = null; S.ironSampleCurrentShape = null; };
+  setupPinchZoom(cv);
+}
+
+function extractIronSampleRoiData(roi) {
+  var cv = document.getElementById('iron-sample-cv');
+  if (!cv) return null;
+  var px = getPixels(cv, roi.x, roi.y, roi.w, roi.h);
+  var rgb = meanRGB(px);
+  var hsv = toHSV(rgb.R, rgb.G, rgb.B);
+  var lab = toLAB(rgb.R, rgb.G, rgb.B);
+  var intensity = 0.299*rgb.R + 0.587*rgb.G + 0.114*rgb.B;
+  return { avgR: rgb.R, avgG: rgb.G, avgB: rgb.B, hsv: hsv, lab: lab, intensity: intensity, pixelCount: px.length/4 };
+}
+
+function renderIronSampleRois() {
+  var el = document.getElementById('iron-sample-roi-list');
+  if (!S.ironSampleRois.length) { el.innerHTML = ''; return; }
+  var html = '<div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:6px;letter-spacing:.4px">Sample ROIs (' + S.ironSampleRois.length + ')</div>';
+  html += '<div style="overflow-x:auto"><table class="rtbl"><thead><tr><th>#</th><th>Dilution</th><th>R</th><th>G</th><th>B</th><th>H°</th><th>S%</th><th>V%</th><th>L*</th><th>a*</th><th>b*</th><th>Int.</th><th>✕</th></tr></thead><tbody>';
+  S.ironSampleRois.forEach(function(roi, i) {
+    var cd = roi.colorData || {};
+    var defaultDil = i === 0 ? 2 : Math.pow(2, i+1);
+    var dil = roi.dilutionFactor || defaultDil;
+    html += '<tr><td>'+(i+1)+'</td><td><select class="ironSampleDil" data-idx="'+i+'" style="width:60px;background:var(--s3);border:1px solid var(--border);color:var(--text);padding:3px;border-radius:4px;font-size:10px"><option value="1"'+(dil==1?'selected':'')+'>1:1</option><option value="2"'+(dil==2?'selected':'')+'>1:2</option><option value="4"'+(dil==4?'selected':'')+'>1:4</option><option value="8"'+(dil==8?'selected':'')+'>1:8</option><option value="16"'+(dil==16?'selected':'')+'>1:16</option><option value="32"'+(dil==32?'selected':'')+'>1:32</option><option value="64"'+(dil==64?'selected':'')+'>1:64</option><option value="128"'+(dil==128?'selected':'')+'>1:128</option></select></td><td>'+(cd.avgR||'')+'</td><td>'+(cd.avgG||'')+'</td><td>'+(cd.avgB||'')+'</td><td>'+(cd.hsv?cd.hsv.H:'')+'</td><td>'+(cd.hsv?cd.hsv.S:'')+'</td><td>'+(cd.hsv?cd.hsv.V:'')+'</td><td>'+(cd.lab?cd.lab.L:'')+'</td><td>'+(cd.lab?cd.lab.A:'')+'</td><td>'+(cd.lab?cd.lab.B:'')+'</td><td>'+(cd.intensity!==undefined?cd.intensity.toFixed(2):'')+'</td><td><button class="btn danger btn-sm" style="padding:2px 6px;font-size:10px" onclick="deleteIronSampleRoi('+i+')">✕</button></td></tr>';
+  });
+  html += '</tbody></table></div>';
+  el.innerHTML = html;
+  S.ironSampleRois.forEach(function(roi, i) {
+    var sel = document.querySelector('.ironSampleDil[data-idx="'+i+'"]');
+    if (sel) sel.addEventListener('change', function() { roi.dilutionFactor = parseInt(this.value); drawIronSampleCanvas(); });
+  });
+}
+
+function deleteIronSampleRoi(idx) {
+  S.ironSampleRois.splice(idx, 1);
+  drawIronSampleCanvas();
+  renderIronSampleRois();
+  document.getElementById('iron-sample-results').style.display = 'none';
+}
+
+function runIronAnalysis() {
+  var model = ironGetModel();
+  if (!model || !model.active) { toast('No active iron calibration model. Build or use built-in model first.'); return; }
+  if (!S.ironSampleRois.length) { toast('Draw at least one sample ROI'); return; }
+  S.ironModel = model;
+  var results = [];
+  S.ironSampleRois.forEach(function(roi, idx) {
+    var dilSel = document.querySelector('.ironSampleDil[data-idx="'+idx+'"]');
+    var dilFactor = dilSel ? parseInt(dilSel.value) : (roi.dilutionFactor || 1);
+    roi.dilutionFactor = dilFactor;
+    var cd = roi.colorData || extractIronSampleRoiData(roi);
+    if (!cd) return;
+    var featureVal = null;
+    if (model.selectedFeature==='R') featureVal=cd.avgR;
+    else if (model.selectedFeature==='G') featureVal=cd.avgG;
+    else if (model.selectedFeature==='B') featureVal=cd.avgB;
+    else if (model.selectedFeature==='H') featureVal=cd.hsv.H;
+    else if (model.selectedFeature==='S') featureVal=cd.hsv.S;
+    else if (model.selectedFeature==='V') featureVal=cd.hsv.V;
+    else if (model.selectedFeature==='L*') featureVal=cd.lab.L;
+    else if (model.selectedFeature==='a*') featureVal=cd.lab.A;
+    else if (model.selectedFeature==='b*') featureVal=cd.lab.B;
+    else if (model.selectedFeature==='Intensity') featureVal=cd.intensity;
+    var rawConc = null;
+    if (featureVal !== null) {
+      rawConc = (featureVal - model.intercept) / model.coefficients[0];
+      rawConc = Math.max(0, parseFloat(rawConc.toFixed(4)));
+    }
+    var correctedConc = rawConc !== null ? parseFloat((rawConc * dilFactor).toFixed(4)) : null;
+    var inRange = rawConc !== null && rawConc >= model.minimumConcentrationMgL && rawConc <= model.maximumConcentrationMgL;
+    var isSaturated = cd.avgR > 250 && cd.avgG > 250 && cd.avgB > 250;
+    var isTooDark = cd.intensity < 10;
+    var isTooBright = cd.intensity > 245;
+    var isValid = inRange && !isSaturated && !isTooDark && !isTooBright;
+    results.push({
+      idx: idx, label: 'ROI ' + (idx+1), dilution: '1:' + dilFactor, dilFactor: dilFactor,
+      r: cd.avgR, g: cd.avgG, b: cd.avgB, h: cd.hsv.H, s: cd.hsv.S, v: cd.hsv.V,
+      L: cd.lab.L, a: cd.lab.A, b: cd.lab.B, intensity: cd.intensity, featureVal: featureVal,
+      rawConc: rawConc, correctedConc: correctedConc, inRange: inRange,
+      isSaturated: isSaturated, isTooDark: isTooDark, isTooBright: isTooBright, isValid: isValid
+    });
+  });
+  var validResults = results.filter(function(r){return r.isValid && r.correctedConc !== null;});
+  var correctedVals = validResults.map(function(r){return r.correctedConc;});
+  var stats = { count:0, mean:null, median:null, sd:null, cv:null, min:null, max:null };
+  if (correctedVals.length > 0) {
+    var sum = correctedVals.reduce(function(a,b){return a+b;},0);
+    stats.count = correctedVals.length;
+    stats.mean = parseFloat((sum/stats.count).toFixed(4));
+    var sorted = correctedVals.slice().sort(function(a,b){return a-b;});
+    stats.median = stats.count%2===0 ? parseFloat(((sorted[stats.count/2-1]+sorted[stats.count/2])/2).toFixed(4)) : sorted[Math.floor(stats.count/2)];
+    var variance = correctedVals.reduce(function(a,v){return a+Math.pow(v-stats.mean,2);},0)/stats.count;
+    stats.sd = parseFloat(Math.sqrt(variance).toFixed(4));
+    stats.cv = stats.mean>0 ? parseFloat((stats.sd/stats.mean*100).toFixed(2)) : null;
+    stats.min = parseFloat(Math.min.apply(null,correctedVals).toFixed(4));
+    stats.max = parseFloat(Math.max.apply(null,correctedVals).toFixed(4));
+  }
+  S.ironResults = { results: results, stats: stats, model: model };
+  var el = document.getElementById('iron-sample-results');
+  el.style.display = 'block';
+  var html = '<div class="info-box" style="font-size:10px"><strong>📋 Calibration:</strong> ' + (model.isBuiltIn?'Built-in':'Custom') + ' · Feature: ' + model.selectedFeature + ' · R²: ' + model.rSquared.toFixed(4) + ' · Range: ' + model.minimumConcentrationMgL + '–' + model.maximumConcentrationMgL + ' mg/L</div>';
+  html += '<div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Individual ROI Results</div>';
+  html += '<div style="overflow-x:auto"><table class="rtbl"><thead><tr><th>ROI</th><th>Dil</th><th>R</th><th>G</th><th>B</th><th>Feature</th><th>Raw Conc</th><th>Corr Conc</th><th>Status</th></tr></thead><tbody>';
+  results.forEach(function(r) {
+    var status = r.isValid ? '✅ Valid' : '⚠️ ' + (!r.inRange?'OUT OF RANGE':r.isSaturated?'SATURATED':r.isTooDark?'TOO DARK':r.isTooBright?'TOO BRIGHT':'INVALID');
+    var sc = r.isValid ? 'var(--accent)' : 'var(--red)';
+    html += '<tr><td><b>'+r.label+'</b></td><td>'+r.dilution+'</td><td>'+r.r+'</td><td>'+r.g+'</td><td>'+r.b+'</td><td><b>'+(r.featureVal!==null?r.featureVal.toFixed(2):'N/A')+'</b></td><td>'+(r.rawConc!==null?r.rawConc:'N/A')+'</td><td style="color:var(--accent);font-weight:800">'+(r.correctedConc!==null?r.correctedConc:'N/A')+'</td><td style="color:'+sc+';font-weight:700;font-size:9px">'+status+'</td></tr>';
+  });
+  html += '</tbody></table></div>';
+  if (stats.count > 0) {
+    html += '<div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);margin:12px 0 6px">🌿 Leaf Iron Result — Final Summary</div>';
+    html += '<div class="cal-stats">';
+    html += '<div class="cs-item"><div class="cs-val">'+stats.mean+'</div><div class="cs-lbl">Mean Conc (mg/L)</div></div>';
+    html += '<div class="cs-item"><div class="cs-val">'+stats.median+'</div><div class="cs-lbl">Median (mg/L)</div></div>';
+    html += '<div class="cs-item"><div class="cs-val">'+stats.sd+'</div><div class="cs-lbl">Std Dev</div></div>';
+    html += '<div class="cs-item"><div class="cs-val">'+(stats.cv!==null?stats.cv+'%':'N/A')+'</div><div class="cs-lbl">CV (%)</div></div>';
+    html += '<div class="cs-item"><div class="cs-val">'+stats.min+'</div><div class="cs-lbl">Min (mg/L)</div></div>';
+    html += '<div class="cs-item"><div class="cs-val">'+stats.max+'</div><div class="cs-lbl">Max (mg/L)</div></div>';
+    html += '</div>';
+    html += '<div style="font-size:10px;color:var(--muted);margin-top:8px">Final iron concentration: <strong style="color:var(--accent)">'+stats.mean+' mg/L</strong> (mean of '+stats.count+' valid ROIs)</div>';
+  } else {
+    html += '<div class="alert" style="background:rgba(249,115,22,.08);border:1px solid var(--orange);border-radius:6px;padding:10px;color:var(--orange);font-size:12px;margin-top:10px"><strong>⚠️ No valid ROIs</strong> — All ROIs are outside calibration range or have quality issues.</div>';
+  }
+  el.innerHTML = html;
+  toast('✓ Iron analysis complete');
+}
 
 // ── INIT ──
 buildCalRows();
