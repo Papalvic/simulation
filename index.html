@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
-<title>μFluidic Analyser — Simulation</title>
+<title>μFluidic Lab Analyser — Pro</title>
 <style>
 :root {
   --bg:#0a0e17;--s1:#111827;--s2:#1a2332;--s3:#243044;--border:#2a3a50;
@@ -220,7 +220,7 @@ header{position:sticky;top:0;z-index:100;background:rgba(10,14,23,.85);backdrop-
 <body>
 <header>
   <button class="hamburger" id="hamburger" onclick="toggleDrawer()" aria-label="Menu"><span></span><span></span><span></span></button>
-  <div class="logo">🔬 μFluidic <span>Sim.</span></div>
+  <div class="logo">🔬 μFluidic <span>Lab</span></div>
   <nav class="top-nav">
     <button class="nt on" data-tab="c" onclick="goTo('c')">🧪 Colorimetry</button>
     <button class="nt" data-tab="b" onclick="goTo('b')">🩸 Blood Analysis</button>
@@ -229,7 +229,7 @@ header{position:sticky;top:0;z-index:100;background:rgba(10,14,23,.85);backdrop-
 </header>
 <div id="drawer-overlay" onclick="closeDrawer()"></div>
 <aside id="side-drawer">
-  <div class="drawer-header"><div class="drawer-logo">🔬 μFluidic Sim</div><button class="drawer-close" onclick="closeDrawer()">✕</button></div>
+  <div class="drawer-header"><div class="drawer-logo">🔬 μFluidic Lab</div><button class="drawer-close" onclick="closeDrawer()">✕</button></div>
   <div class="drawer-section-label">Main Sections</div>
   <button class="dnav on" data-tab="c" onclick="goTo('c');closeDrawer()"><span class="dni">🧪</span><div class="dnav-text"><div class="dnav-title">Colorimetry</div><div class="dnav-sub">Measure colour from strip images</div></div></button>
   <button class="dnav" data-tab="b" onclick="goTo('b');closeDrawer()"><span class="dni">🩸</span><div class="dnav-text"><div class="dnav-title">Blood Analysis</div><div class="dnav-sub">Analyse blood separation layers</div></div></button>
@@ -289,6 +289,7 @@ header{position:sticky;top:0;z-index:100;background:rgba(10,14,23,.85);backdrop-
         <div class="mb" data-amode="standard" onclick="setAnalysisMode('standard',this)">📏 vs Standard</div>
         <div class="mb" data-amode="calib" onclick="setAnalysisMode('calib',this)">📈 Full Calibration</div>
         <div class="mb" data-amode="compare" onclick="setAnalysisMode('compare',this)">🔀 Compare Samples</div>
+        <div class="mb" data-amode="iron" onclick="setAnalysisMode('iron',this)">🔩 Iron Analysis</div>
       </div>
       <div id="c-mode-info" class="info-box"><strong>Single Sample</strong> — Analyzes all Sample regions.</div>
     </div>
@@ -339,6 +340,60 @@ header{position:sticky;top:0;z-index:100;background:rgba(10,14,23,.85);backdrop-
     <div class="card">
       <div class="ct"><span class="dot"></span>Beer-Lambert Curve</div>
       <canvas id="c-beer-lambert" style="max-height:280px"></canvas>
+    </div>
+    <!-- ═══════════════════ IRON CALIBRATION BUILDER ═══════════════════ -->
+    <div class="card" id="iron-cal-builder-card" style="display:none">
+      <div class="ct"><span class="dot"></span>🔩 Iron Calibration Builder</div>
+      <div class="info-box"><strong>Iron Calibration (Fe³⁺ + KSCN at 560 nm)</strong> — Upload a serial dilution μPAD image, draw ROIs, enter concentrations & absorbance to build a calibration model. Uses real color data (RGB, HSV, LAB, Intensity) and selects the best feature by R².</div>
+      <div class="upload-single" id="iron-cal-upload" onclick="document.getElementById('iron-cal-file').click()">
+        <input type="file" id="iron-cal-file" accept="image/*" onchange="loadIronCalImage(event)" style="display:none">
+        <div class="ui">🧪</div><div class="ul">Upload Serial Dilution Image</div><div class="us">All standards in one photograph</div>
+      </div>
+      <div id="iron-cal-canvas-section" style="display:none;margin-top:8px">
+        <div class="shape-toggle">
+          <div class="stb on" data-ishape="rect" onclick="setIronCalShape('rect',this)">▭ Rectangle</div>
+          <div class="stb" data-ishape="circle" onclick="setIronCalShape('circle',this)">○ Circle</div>
+        </div>
+        <div class="cbox" id="iron-cal-cbox" style="min-height:200px"><div class="cph" id="iron-cal-ph"><div class="cpi">🧪</div><p>Upload image, then draw ROIs</p></div><canvas id="iron-cal-cv"></canvas></div>
+        <div class="tbar" style="margin-top:8px">
+          <button class="btn primary btn-sm" id="iron-cal-start" onclick="startIronCalDrawing()">✏️ Select ROI</button>
+          <button class="btn btn-sm" id="iron-cal-stop" style="display:none" onclick="stopIronCalDrawing()">⏹ Stop</button>
+          <button class="btn danger btn-sm" onclick="clearIronCalRois()">🗑 Clear ROIs</button>
+          <button class="btn blue btn-sm" onclick="resetZoom('iron-cal')">🔍 Reset Zoom</button>
+        </div>
+      </div>
+      <div id="iron-cal-standards-list" style="margin-top:8px"></div>
+      <div class="tbar" style="margin-top:8px">
+        <button class="btn primary" onclick="buildIronCalModel()">📊 Build Calibration Model</button>
+        <button class="btn" id="iron-cal-save-btn" style="display:none" onclick="saveIronCalModel()">💾 Save & Set Active</button>
+        <button class="btn blue" onclick="useBuiltinIronModel()">🔧 Use Built-in Model</button>
+      </div>
+      <div id="iron-cal-results" style="display:none;margin-top:10px"></div>
+    </div>
+    <!-- ═══════════════════ IRON SAMPLE ANALYSIS ═══════════════════ -->
+    <div class="card" id="iron-sample-card" style="display:none">
+      <div class="ct"><span class="dot"></span>🔩 Iron Concentration Analysis</div>
+      <div class="info-box" id="iron-model-status">No active iron calibration model. Build calibration or use built-in model first.</div>
+      <div class="upload-single" id="iron-sample-upload" onclick="document.getElementById('iron-sample-file').click()">
+        <input type="file" id="iron-sample-file" accept="image/*" onchange="loadIronSampleImage(event)" style="display:none">
+        <div class="ui">📷</div><div class="ul">Upload μPAD Sample Image</div><div class="us">JPG, PNG, BMP, WEBP</div>
+      </div>
+      <div id="iron-sample-canvas-section" style="display:none;margin-top:8px">
+        <div class="shape-toggle">
+          <div class="stb on" data-isshape="rect" onclick="setIronSampleShape('rect',this)">▭ Rectangle</div>
+          <div class="stb" data-isshape="circle" onclick="setIronSampleShape('circle',this)">○ Circle</div>
+        </div>
+        <div class="cbox" id="iron-sample-cbox" style="min-height:200px"><div class="cph" id="iron-sample-ph"><div class="cpi">📷</div><p>Upload image, then draw ROIs</p></div><canvas id="iron-sample-cv"></canvas></div>
+        <div class="tbar" style="margin-top:8px">
+          <button class="btn primary btn-sm" id="iron-sample-start" onclick="startIronSampleDrawing()">✏️ Select ROI</button>
+          <button class="btn btn-sm" id="iron-sample-stop" style="display:none" onclick="stopIronSampleDrawing()">⏹ Stop</button>
+          <button class="btn danger btn-sm" onclick="clearIronSampleRois()">🗑 Clear</button>
+          <button class="btn blue btn-sm" onclick="resetZoom('iron-sample')">🔍 Reset Zoom</button>
+          <button class="btn primary btn-sm" onclick="runIronAnalysis()">🔬 Analyze Iron</button>
+        </div>
+      </div>
+      <div id="iron-sample-roi-list" style="margin-top:8px"></div>
+      <div id="iron-sample-results" style="display:none;margin-top:10px"></div>
     </div>
     <div class="card">
       <div class="ct"><span class="dot"></span>Export</div>
