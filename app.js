@@ -405,7 +405,7 @@ function updateBModeInfo(){
   document.getElementById('b-mode-info').innerHTML=ms[S.bMode]||ms.sep;
 }
 function measureStripLayers(strip){
-  var cv=document.getElementById('b-cv');
+  var cv = document.getElementById('b-cv');
   if(!cv.width){toast('Canvas not ready');return null;}
   var regions=strip.regions;
   regions.forEach(function(r){measureRegion(r,'b');});
@@ -416,7 +416,39 @@ function measureStripLayers(strip){
   if(layers.buffy)bH=layers.buffy.h;
   var tot=rH+pH+bH||1;
   var hct=+(rH/tot*100).toFixed(1);
-  var hb=+(hct/3).toFixed(1);
+  
+  // ─── HEIGHT-BASED HB (OLD METHOD) ───
+  var hbHeight = +(hct/3).toFixed(1);
+  
+  // ─── COLOR-BASED HB (NEW METHOD) ───
+  var hbFromColor = 0;
+  if (layers.rbc && layers.rbc.rgb) {
+    var rgb = layers.rbc.rgb;
+    // Method: Use green channel (most sensitive to blood concentration)
+    var G = rgb.G;
+    // Map G channel (15-80) to Hb (5-16)
+    // Lower G = higher Hb
+    hbFromColor = 22 - (G * 0.2);
+    hbFromColor = Math.max(5, Math.min(18, hbFromColor));
+    hbFromColor = parseFloat(hbFromColor.toFixed(1));
+    
+    // Alternative: Use intensity (brightness)
+    var brightness = (rgb.R + rgb.G + rgb.B) / 3;
+    var hbFromBrightness = 24 - (brightness * 0.25);
+    hbFromBrightness = Math.max(5, Math.min(18, hbFromBrightness));
+    hbFromBrightness = parseFloat(hbFromBrightness.toFixed(1));
+    
+    // Average both methods for better accuracy
+    hbFromColor = parseFloat(((hbFromColor + hbFromBrightness) / 2).toFixed(1));
+  }
+  
+  // ─── CHOOSE FINAL HB ───
+  // Use color-based exclusively for microfluidic paper
+  var hb = hbFromColor || hbHeight;
+  
+  // Optionally: blend both methods
+  // var hb = parseFloat((hbHeight * 0.3 + hbFromColor * 0.7).toFixed(1));
+  
   var rp=+(rH/tot*100).toFixed(1),pp=+(pH/tot*100).toFixed(1),bp=+(bH/tot*100).toFixed(1);
   var flags={};
   if(layers.plasma){flags.icterus=icterusFlag(layers.plasma.lab);flags.lipemia=lipemiaFlag(layers.plasma.hsv,layers.plasma.lab);flags.plasmaClarity=+(100-layers.plasma.dE).toFixed(1);}
