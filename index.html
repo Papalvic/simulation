@@ -465,7 +465,14 @@ header{position:sticky;top:0;z-index:100;background:rgba(10,14,23,.85);backdrop-
       <div class="ct"><span class="dot"></span>Strip Visualisation <span style="font-size:9px;color:var(--muted);font-weight:400">(RBC ↑ top · Plasma · Buffy ↓)</span></div>
       <div id="b-strip-viz" class="strips">
         <div class="strip-wrap"><p>Your Sample</p><div class="sbar" id="b-s-bar" style="height:180px"><div class="sl" id="b-sl-r" style="background:#8b1a1a;height:42%;color:#fff">RBC</div><div class="sl" id="b-sl-p" style="background:#f0d060;height:50%;color:#333">Plasma</div><div class="sl" id="b-sl-b" style="background:#e8e0c8;height:8%;color:#333">Buffy</div></div></div>
-        <div class="strip-wrap"><p>Healthy Ref</p><div class="sbar" style="height:180px"><div class="sl" style="background:#c0282a;height:42%;color:#fff">RBC</div><div class="sl" style="background:#f0d060;height:50%;color:#333">Plasma</div><div class="sl" style="background:#e8e0c8;height:8%;color:#333">Buffy</div></div></div>
+        <div class="strip-wrap"><p>Healthy Ref</p>
+  <div class="sbar" style="height:180px">
+    <!-- Changed to match microfluidic paper measurements -->
+    <div class="sl" style="background:#5e0d19;height:33%;color:#fff">RBC</div>
+    <div class="sl" style="background:#b2583a;height:64%;color:#fff">Plasma</div>
+    <div class="sl" style="background:#d2cdbe;height:3%;color:#333">Buffy</div>
+  </div>
+</div>
         <div class="strip-data">
           <div class="srow"><span class="sk">Hematocrit</span><span class="sv" id="b-r-hct" style="color:var(--accent)">—</span></div>
           <div class="srow"><span class="sk">Est. Haemoglobin</span><span class="sv" id="b-r-hb">— g/dL</span></div>
