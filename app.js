@@ -46,8 +46,12 @@ var VEG_DB = [
   {name:'Moringa Powder',iron:4.0,type:'Leafy green',vitC:51.7,note:'Iron + vitamin C power'}
 ];
 
-var HEALTHY = { rbc:{rgb:[180,38,40],lab:{L:38,A:42,B:20}}, plasma:{rgb:[228,212,160],lab:{L:86,A:2,B:22}}, buffy:{rgb:[210,205,190],lab:{L:82,A:1,B:10}} };
-
+//var HEALTHY = { rbc:{rgb:[180,38,40],lab:{L:38,A:42,B:20}}, plasma:{rgb:[228,212,160],lab:{L:86,A:2,B:22}}, buffy:{rgb:[210,205,190],lab:{L:82,A:1,B:10}} };
+var HEALTHY = {
+  rbc:    { rgb: [94, 13, 25],   lab: { L: 19,   A: 35.8, B: 15.9 } },
+  plasma: { rgb: [178, 88, 58],  lab: { L: 47.9, A: 34.2, B: 34   } },
+  buffy:  { rgb: [210, 205, 190],lab: { L: 82,   A: 1,    B: 10   } }
+};
 // ═══════════════════════════════════════════════════════════════
 //  NAVIGATION
 // ═══════════════════════════════════════════════════════════════
