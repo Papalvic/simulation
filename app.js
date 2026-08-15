@@ -428,7 +428,9 @@ function measureStripLayers(strip){
     var G = rgb.G;
     // Map G channel (15-80) to Hb (5-16)
     // Lower G = higher Hb
-    hbFromColor = 22 - (G * 0.2);
+    //hbFromColor = 22 - (G * 0.2);
+    // To get LOWER Hb values (e.g., 10-12):
+    hbFromColor = 20 - (G * 0.18);
     hbFromColor = Math.max(5, Math.min(18, hbFromColor));
     hbFromColor = parseFloat(hbFromColor.toFixed(1));
     
