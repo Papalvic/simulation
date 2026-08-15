@@ -421,7 +421,7 @@ function measureStripLayers(strip){
   var hbHeight = +(hct/3).toFixed(1);
   
   // ─── COLOR-BASED HB (NEW METHOD) ───
-  var  = 0;
+  var hbFromColor = 0;
   if (layers.rbc && layers.rbc.rgb) {
     var rgb = layers.rbc.rgb;
     // Method: Use green channel (most sensitive to blood concentration)
