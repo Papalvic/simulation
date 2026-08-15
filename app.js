@@ -47,10 +47,23 @@ var VEG_DB = [
 ];
 
 //var HEALTHY = { rbc:{rgb:[180,38,40],lab:{L:38,A:42,B:20}}, plasma:{rgb:[228,212,160],lab:{L:86,A:2,B:22}}, buffy:{rgb:[210,205,190],lab:{L:82,A:1,B:10}} };
-var HEALTHY = {
-  rbc:    { rgb: [94, 13, 25],   lab: { L: 19,   A: 35.8, B: 15.9 } },
-  plasma: { rgb: [178, 88, 58],  lab: { L: 47.9, A: 34.2, B: 34   } },
-  buffy:  { rgb: [210, 205, 190],lab: { L: 82,   A: 1,    B: 10   } }
+
+// If Hb = 11 g/dL, then Hct = Hb × 3 = 33%
+// For microfluidic paper, adjust colors accordingly
+
+var HEALTHY = { 
+  rbc: { 
+    rgb: [120, 20, 30],         // Slightly lighter than your measurement
+    lab: { L: 25, A: 38, B: 18 } 
+  }, 
+  plasma: { 
+    rgb: [180, 95, 65],         // Slightly adjusted from your measurement
+    lab: { L: 50, A: 33, B: 32 } 
+  }, 
+  buffy: { 
+    rgb: [210, 205, 190],       // Keep this
+    lab: { L: 82, A: 1, B: 10 } 
+  } 
 };
 // ═══════════════════════════════════════════════════════════════
 //  NAVIGATION
