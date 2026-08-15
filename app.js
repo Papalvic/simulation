@@ -421,7 +421,7 @@ function measureStripLayers(strip){
   var hbHeight = +(hct/3).toFixed(1);
   
   // ─── COLOR-BASED HB (NEW METHOD) ───
-  var hbFromColor = 0;
+  var  = 0;
   if (layers.rbc && layers.rbc.rgb) {
     var rgb = layers.rbc.rgb;
     // Method: Use green channel (most sensitive to blood concentration)
@@ -430,7 +430,7 @@ function measureStripLayers(strip){
     // Lower G = higher Hb
     //hbFromColor = 22 - (G * 0.2);
     // To get LOWER Hb values (e.g., 10-12):
-    hbFromColor = 20 - (G * 0.18);
+    hbFromColor = 25 - (G * 0.25);
     hbFromColor = Math.max(5, Math.min(18, hbFromColor));
     hbFromColor = parseFloat(hbFromColor.toFixed(1));
     
