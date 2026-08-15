@@ -561,7 +561,122 @@ function renderTimeResults(results){var el=document.getElementById('b-results');
   h+='<div style="overflow-x:auto"><table class="rtbl"><thead><tr><th>Time</th><th>Hb</th><th>Hct</th><th>RBC%</th><th>Plasma%</th><th>Buffy%</th><th>RBC R</th><th>RBC G</th><th>RBC B</th><th>Status</th></tr></thead><tbody>';
   sorted.forEach(function(r){var l=r.layers.rbc;h+='<tr><td><b>'+(r.timePoint||'?')+'</b></td><td>'+r.hb+'</td><td>'+r.hct+'%</td><td>'+r.rp+'%</td><td>'+r.pp+'%</td><td>'+r.bp+'%</td><td>'+(l?l.rgb.R:'—')+'</td><td>'+(l?l.rgb.G:'—')+'</td><td>'+(l?l.rgb.B:'—')+'</td><td><span class="badge '+r.cls.c+'">'+r.cls.l+'</span></td></tr>';});
   h+='</tbody></table></div>';el.innerHTML=h;}
-function renderBloodCharts(r){mk('b-layers',{type:'bar',data:{labels:['Your Sample','Healthy Ref'],datasets:[{label:'RBC%',data:[r.rp,42],backgroundColor:'rgba(192,40,42,.8)'},{label:'Plasma%',data:[r.pp,50],backgroundColor:'rgba(240,208,96,.8)'},{label:'Buffy%',data:[r.bp,8],backgroundColor:'rgba(232,224,200,.8)'}]},options:{responsive:true,plugins:{legend:lO},scales:{x:{stacked:true,ticks:tO,grid:gO},y:{stacked:true,max:100,ticks:tO,grid:gO}}}});if(r.layers.rbc&&r.layers.rbc.rawPx){var px=r.layers.rbc.rawPx;var rH=new Array(16).fill(0),gH=new Array(16).fill(0),bH=new Array(16).fill(0);for(var i=0;i<px.length;i+=4){rH[px[i]>>4]++;gH[px[i+1]>>4]++;bH[px[i+2]>>4]++;}mk('b-hist',{type:'line',data:{labels:Array.from({length:16},function(_,i){return i*16;}),datasets:[{label:'R',data:rH,borderColor:'#ef4444',fill:true,backgroundColor:'rgba(239,68,68,.1)',tension:.4,pointRadius:0,borderWidth:1.5},{label:'G',data:gH,borderColor:'#00e5a0',fill:true,backgroundColor:'rgba(0,229,160,.1)',tension:.4,pointRadius:0,borderWidth:1.5},{label:'B',data:bH,borderColor:'#3b82f6',fill:true,backgroundColor:'rgba(59,130,246,.1)',tension:.4,pointRadius:0,borderWidth:1.5}]},options:{responsive:true,plugins:{legend:lO},scales:{x:{ticks:tO,grid:gO},y:{ticks:tO,grid:gO}}}});}var names=['RBC','Plasma','Buffy'];var healthy=[[192,40,42],[240,208,96],[232,224,200]];var yours=[r.layers.rbc?[r.layers.rbc.rgb.R,r.layers.rbc.rgb.G,r.layers.rbc.rgb.B]:[128,128,128],r.layers.plasma?[r.layers.plasma.rgb.R,r.layers.plasma.rgb.G,r.layers.plasma.rgb.B]:[128,128,128],r.layers.buffy?[r.layers.buffy.rgb.R,r.layers.buffy.rgb.G,r.layers.buffy.rgb.B]:[128,128,128]];mk('b-sw',{type:'bar',data:{labels:names,datasets:[{label:'Your R',data:yours.map(function(c){return c[0];}),backgroundColor:yours.map(function(c){return 'rgb('+c[0]+','+c[1]+','+c[2]+')';}),borderWidth:1,borderColor:'#2a3a50'},{label:'Healthy R',data:healthy.map(function(c){return c[0];}),backgroundColor:healthy.map(function(c){return 'rgba('+c[0]+','+c[1]+','+c[2]+',.5)';}),borderWidth:1,borderColor:'#2a3a50'}]},options:{responsive:true,plugins:{legend:lO},scales:{x:{ticks:tO,grid:gO},y:{max:255,ticks:tO,grid:gO}}}});renderRadarChart(r);}
+function renderBloodCharts(r){
+  // LAYER PERCENTAGES CHART - Updated for microfluidic paper
+  mk('b-layers',{
+    type:'bar',
+    data:{
+      labels:['Your Sample','Healthy Ref'],
+      datasets:[
+        {
+          label:'RBC%',
+          data:[r.rp, 33],
+          backgroundColor:'rgba(94,13,25,.8)'
+        },
+        {
+          label:'Plasma%',
+          data:[r.pp, 64],
+          backgroundColor:'rgba(178,88,58,.8)'
+        },
+        {
+          label:'Buffy%',
+          data:[r.bp, 3],
+          backgroundColor:'rgba(232,224,200,.8)'
+        }
+      ]
+    },
+    options:{
+      responsive:true,
+      plugins:{legend:lO},
+      scales:{
+        x:{stacked:true, ticks:tO, grid:gO},
+        y:{stacked:true, max:100, ticks:tO, grid:gO}
+      }
+    }
+  });
+
+  // RBC HISTOGRAM - Keep unchanged
+  if(r.layers.rbc && r.layers.rbc.rawPx){
+    var px = r.layers.rbc.rawPx;
+    var rH = new Array(16).fill(0), gH = new Array(16).fill(0), bH = new Array(16).fill(0);
+    for(var i = 0; i < px.length; i += 4){
+      rH[px[i] >> 4]++;
+      gH[px[i+1] >> 4]++;
+      bH[px[i+2] >> 4]++;
+    }
+    mk('b-hist',{
+      type:'line',
+      data:{
+        labels:Array.from({length:16}, function(_,i){ return i*16; }),
+        datasets:[
+          {label:'R', data:rH, borderColor:'#ef4444', fill:true, backgroundColor:'rgba(239,68,68,.1)', tension:.4, pointRadius:0, borderWidth:1.5},
+          {label:'G', data:gH, borderColor:'#00e5a0', fill:true, backgroundColor:'rgba(0,229,160,.1)', tension:.4, pointRadius:0, borderWidth:1.5},
+          {label:'B', data:bH, borderColor:'#3b82f6', fill:true, backgroundColor:'rgba(59,130,246,.1)', tension:.4, pointRadius:0, borderWidth:1.5}
+        ]
+      },
+      options:{
+        responsive:true,
+        plugins:{legend:lO},
+        scales:{
+          x:{ticks:tO, grid:gO},
+          y:{ticks:tO, grid:gO}
+        }
+      }
+    });
+  }
+
+  // COLOR SWATCHES CHART - Updated healthy references
+  var names = ['RBC','Plasma','Buffy'];
+  var healthy = [
+    [94, 13, 25],    // Your RBC measurement
+    [178, 88, 58],   // Your Plasma measurement
+    [210, 205, 190]  // Buffy (adjust if needed)
+  ];
+  
+  var yours = [
+    r.layers.rbc ? [r.layers.rbc.rgb.R, r.layers.rbc.rgb.G, r.layers.rbc.rgb.B] : [128,128,128],
+    r.layers.plasma ? [r.layers.plasma.rgb.R, r.layers.plasma.rgb.G, r.layers.plasma.rgb.B] : [128,128,128],
+    r.layers.buffy ? [r.layers.buffy.rgb.R, r.layers.buffy.rgb.G, r.layers.buffy.rgb.B] : [128,128,128]
+  ];
+
+  mk('b-sw',{
+    type:'bar',
+    data:{
+      labels:names,
+      datasets:[
+        {
+          label:'Your Sample',
+          data: yours.map(function(c){ return c[0]; }),
+          backgroundColor: yours.map(function(c){ 
+            return 'rgb('+c[0]+','+c[1]+','+c[2]+')'; 
+          }),
+          borderWidth:1,
+          borderColor:'#2a3a50'
+        },
+        {
+          label:'Healthy Ref',
+          data: healthy.map(function(c){ return c[0]; }),
+          backgroundColor: healthy.map(function(c){ 
+            return 'rgba('+c[0]+','+c[1]+','+c[2]+',.5)'; 
+          }),
+          borderWidth:1,
+          borderColor:'#2a3a50'
+        }
+      ]
+    },
+    options:{
+      responsive:true,
+      plugins:{legend:lO},
+      scales:{
+        x:{ticks:tO, grid:gO},
+        y:{max:255, ticks:tO, grid:gO}
+      }
+    }
+  });
+
+  // RADAR CHART - Keep unchanged
+  renderRadarChart(r);
+}
 function renderRadarChart(r){if(!r)return;var ld=['rbc','plasma','buffy'].map(function(n){return r.layers[n]?r.layers[n].lab:{L:0,A:0,B:0};});mk('b-lab',{type:'radar',data:{labels:['LAB L','LAB A','LAB B'],datasets:ld.map(function(l,i){return{label:['RBC','Plasma','Buffy'][i],data:[l.L,l.A,l.B],borderColor:['#ef4444','#f0d060','#ccc'][i],backgroundColor:['rgba(239,68,68,.1)','rgba(240,208,96,.1)','rgba(200,200,200,.1)'][i],pointRadius:3};})},options:{responsive:true,plugins:{legend:lO},scales:{r:{ticks:{color:'#64748b',font:{size:8}},grid:{color:'#2a3a50'},pointLabels:{color:'#64748b',font:{size:9}}}}}});}
 
 function renderIronRecommendation(r){
